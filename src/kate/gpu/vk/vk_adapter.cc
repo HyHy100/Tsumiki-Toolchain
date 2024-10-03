@@ -1,5 +1,5 @@
-#include "adapter.h"
-#include "device.h"
+#include "vk_adapter.h"
+#include "vk_device.h"
 
 namespace kate::gpu {
     VkAdapterObject::VkAdapterObject()

@@ -1,5 +1,7 @@
 #pragma once
 
+#include "kate/gpu/extent.h"
+
 #include "kate/gpu/device.h"
 
 #include <vulkan/vulkan.hpp>
@@ -14,6 +16,13 @@ namespace kate::gpu {
         VkDeviceObject(std::shared_ptr<VkAdapterObject> adapter);
 
         vk::Device& getDevice();
+
+        std::shared_ptr<Texture> createTexture(
+            Texture::Dimension dimension,
+            Texture::Format format,
+            const Extent& extent,
+            uint16_t layers
+        ) override;
     private:
         std::shared_ptr<VkAdapterObject> m_adapter;
 
