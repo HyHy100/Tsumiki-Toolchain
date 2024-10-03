@@ -4,6 +4,7 @@ def fetch_binaries():
     #   Ninja
     #   CMake
     #   Clang
+    
 
 def update_submodules():
     # TODO: Fetch required submodules from third party deps here.
