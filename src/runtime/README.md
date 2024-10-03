@@ -1,0 +1,1 @@
+Game-related runtime code should live here in runtime/.
