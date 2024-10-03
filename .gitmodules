@@ -13,3 +13,6 @@
 [submodule "src/third_party/khronos/vulkan-hpp"]
 	path = src/third_party/khronos/vulkan-hpp
 	url = https://github.com/KhronosGroup/Vulkan-Hpp
+[submodule "src/third_party/google/skia"]
+	path = src/third_party/google/skia
+	url = https://github.com/google/skia
