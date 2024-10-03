@@ -1,0 +1,6 @@
+[submodule "src/third_party/khronos/vulkan-loader"]
+	path = src/third_party/khronos/vulkan-loader
+	url = https://github.com/KhronosGroup/Vulkan-Loader
+[submodule "src/third_party/khronos/vulkan-validation-layers"]
+	path = src/third_party/khronos/vulkan-validation-layers
+	url = https://github.com/KhronosGroup/Vulkan-ValidationLayers
