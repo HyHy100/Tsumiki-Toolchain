@@ -4,3 +4,12 @@
 [submodule "src/third_party/khronos/vulkan-validation-layers"]
 	path = src/third_party/khronos/vulkan-validation-layers
 	url = https://github.com/KhronosGroup/Vulkan-ValidationLayers
+[submodule "src/third_party/capnproto"]
+	path = src/third_party/capnproto
+	url = https://github.com/capnproto/capnproto
+[submodule "src/third_party/khronos/glslang"]
+	path = src/third_party/khronos/glslang
+	url = https://github.com/KhronosGroup/glslang
+[submodule "src/third_party/khronos/vulkan-hpp"]
+	path = src/third_party/khronos/vulkan-hpp
+	url = https://github.com/KhronosGroup/Vulkan-Hpp
