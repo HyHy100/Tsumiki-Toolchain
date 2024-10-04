@@ -120,20 +120,20 @@ namespace kate::gpu {
 
     uint32_t VkDeviceObject::getMemoryTypeIndex(uint32_t typeBits, vk::MemoryPropertyFlags properties)
 	{
-		vk::PhysicalDeviceMemoryProperties deviceMemoryProperties = m_physicalDevice.getMemoryProperties();
-		// Iterate over all memory types available for the device used in this example
-		for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; i++)
-		{
-			if ((typeBits & 1) == 1)
-			{
-				if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
-				{
-					return i;
-				}
-			}
-			typeBits >>= 1;
-		}
+        vk::PhysicalDeviceMemoryProperties deviceMemoryProperties = m_physicalDevice.getMemoryProperties();
+        // Iterate over all memory types available for the device used in this example
+        for (uint32_t i = 0; i < deviceMemoryProperties.memoryTypeCount; i++)
+        {
+            if ((typeBits & 1) == 1)
+            {
+                if ((deviceMemoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
+                {
+                    return i;
+                }
+            }
+            typeBits >>= 1;
+        }
 
-		throw "Could not find a suitable memory type!";
-	}
+        throw "Could not find a suitable memory type!";
+    }
 }
