@@ -3,8 +3,27 @@
 
 namespace kate::gpu {
     VkAdapterObject::VkAdapterObject()
-        : m_instance { vk::createInstance({}) }
     {
+        vk::ApplicationInfo appinfo = vk::ApplicationInfo(
+            "",                             // Application name
+            vk::makeVersion(1, 0, 0),       // Application version
+            "kate",                         // Engine name
+            vk::makeVersion(0, 1, 0),       // Engine version
+            vk::makeApiVersion(1, 0, 0, 0)  // Vulkan API version
+        );
+        
+        std::array<const char* const, 1> layers {
+            "VK_LAYER_KHRONOS_validation"
+        };
+
+        m_instance = vk::createInstance(
+            vk::InstanceCreateInfo(
+                vk::InstanceCreateFlags { 0u },
+                &appinfo,
+                {},
+                layers
+            )
+        );
     }
 
     std::shared_ptr<Device> VkAdapterObject::createDeviceAPI()
