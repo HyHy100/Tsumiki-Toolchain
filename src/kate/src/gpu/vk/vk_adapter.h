@@ -12,10 +12,10 @@ namespace kate::gpu {
     public:
         VkAdapterObject();
 
+        std::shared_ptr<Device> createDevice() override final;
+
         vk::Instance& getInstance();
     private:
-        std::shared_ptr<Device> createDeviceAPI() override final;
-
         vk::Instance m_instance;
     };
 }

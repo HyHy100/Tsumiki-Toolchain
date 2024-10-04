@@ -23,6 +23,6 @@ namespace kate::gpu {
 
         virtual ~Texture() = default;
 
-        virtual void update(const Memory& memory) = 0;
+        //virtual void update(const Memory& memory) = 0;
     };
 }

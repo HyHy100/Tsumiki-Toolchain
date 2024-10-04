@@ -17,7 +17,12 @@ target_sources(
     src/gpu/adapter.cc
     src/gpu/device.cc
     src/gpu/extent.cc
+    
     src/gpu/memory.cc
+
+    src/gpu/vk/vk_adapter.cc
+    src/gpu/vk/vk_device.cc
+    src/gpu/vk/vk_texture.cc
 )
 
 set_target_properties(

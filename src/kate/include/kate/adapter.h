@@ -7,10 +7,8 @@ namespace kate::gpu {
 
     class Adapter {
     public:
-        std::shared_ptr<Device> createDevice();
+        virtual std::shared_ptr<Device> createDevice() = 0;
 
         virtual ~Adapter() = default;
-    protected:
-        virtual std::shared_ptr<Device> createDeviceAPI() = 0; 
     };
 }

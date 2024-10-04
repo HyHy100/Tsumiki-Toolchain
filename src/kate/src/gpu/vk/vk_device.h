@@ -16,15 +16,20 @@ namespace kate::gpu {
 
         vk::Device& getDevice();
 
+        vk::PhysicalDevice& getPhysicalDevice();
+
         std::shared_ptr<Texture> createTexture(
             Texture::Dimension dimension,
             Texture::Format format,
             const Extent& extent,
             uint16_t layers
         ) override;
+
+        uint32_t getMemoryTypeIndex(uint32_t typeBits, vk::MemoryPropertyFlags properties);
     private:
         std::shared_ptr<VkAdapterObject> m_adapter;
 
         vk::Device m_device;
+        vk::PhysicalDevice m_physicalDevice;
     };
 }

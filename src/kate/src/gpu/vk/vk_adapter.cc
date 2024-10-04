@@ -45,10 +45,10 @@ namespace kate::gpu {
     {
         vk::ApplicationInfo appinfo = vk::ApplicationInfo(
             "",                             // Application name
-            vk::makeVersion(1, 0, 0),       // Application version
+            VK_MAKE_VERSION(1, 0, 0),       // Application version
             "kate",                         // Engine name
-            vk::makeVersion(0, 1, 0),       // Engine version
-            vk::makeApiVersion(1, 0, 0, 0)  // Vulkan API version
+            VK_MAKE_VERSION(0, 1, 0),       // Engine version
+            VK_MAKE_API_VERSION(1, 0, 0, 0)  // Vulkan API version
         );
 
         m_instance = vk::createInstance(
@@ -63,11 +63,9 @@ namespace kate::gpu {
         setupDebugMessenger(m_instance);
     }
 
-    std::shared_ptr<Device> VkAdapterObject::createDeviceAPI()
+    std::shared_ptr<Device> VkAdapterObject::createDevice()
     {
-        return std::make_shared<VkDeviceObject>(
-            getInstance()
-        );
+        return std::make_shared<VkDeviceObject>(shared_from_this());
     }
 
     vk::Instance& VkAdapterObject::getInstance()
