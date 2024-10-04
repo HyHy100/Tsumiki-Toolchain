@@ -1,6 +1,6 @@
 #include "device.h"
 
-namespace kate::gpu::vk {
+namespace kate::gpu {
     Device::Device()
     {
     }

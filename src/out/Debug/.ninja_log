@@ -1,0 +1,8 @@
+# ninja log v6
+0	41	1728002312645423990	kate/CMakeFiles/kate.dir/src/gpu/extent.cc.o	c31ea582e436ee2d
+1	42	1728002312646424003	kate/CMakeFiles/kate.dir/src/gpu/memory.cc.o	23308cd694bba48a
+1	344	1728002312646424003	CMakeFiles/tsumiki.dir/main.cc.o	d9f2ab967cb9e1ce
+0	406	1728002312645423990	kate/CMakeFiles/kate.dir/src/gpu/adapter.cc.o	e37dda5151f283c9
+1	300	1728002364248103051	kate/CMakeFiles/kate.dir/src/gpu/device.cc.o	6e288ddcf67d0a28
+300	779	1728002364547106986	kate/libkate.a	814e0b8378ddcaaa
+779	825	1728002365026113289	tsumiki	c5620beeed6a2668

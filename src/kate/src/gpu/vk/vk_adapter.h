@@ -1,7 +1,7 @@
 #pragma once
 
-#include "kate/gpu/adapter.h"
-#include "kate/gpu/device.h"
+#include "kate/adapter.h"
+#include "kate/device.h"
 
 #include <memory>
 

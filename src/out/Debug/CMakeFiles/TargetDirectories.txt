@@ -1,0 +1,6 @@
+/home/hyhy100/work/Tsumiki-Toolchain/src/out/Debug/CMakeFiles/tsumiki.dir
+/home/hyhy100/work/Tsumiki-Toolchain/src/out/Debug/CMakeFiles/edit_cache.dir
+/home/hyhy100/work/Tsumiki-Toolchain/src/out/Debug/CMakeFiles/rebuild_cache.dir
+/home/hyhy100/work/Tsumiki-Toolchain/src/out/Debug/kate/CMakeFiles/kate.dir
+/home/hyhy100/work/Tsumiki-Toolchain/src/out/Debug/kate/CMakeFiles/edit_cache.dir
+/home/hyhy100/work/Tsumiki-Toolchain/src/out/Debug/kate/CMakeFiles/rebuild_cache.dir

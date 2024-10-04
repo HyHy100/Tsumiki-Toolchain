@@ -1,8 +1,7 @@
 #pragma once
 
-#include "kate/gpu/extent.h"
-
-#include "kate/gpu/device.h"
+#include "kate/device.h"
+#include "kate/extent.h"
 
 #include <vulkan/vulkan.hpp>
 
