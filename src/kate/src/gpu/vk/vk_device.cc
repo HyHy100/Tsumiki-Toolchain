@@ -1,4 +1,5 @@
 #include "vk_adapter.h"
+#include "vk_config.h"
 #include "vk_device.h"
 
 namespace kate::gpu {
@@ -13,7 +14,86 @@ namespace kate::gpu {
         // TODO: Pick a physical device properly.
         vk::PhysicalDevice physical_device = physical_devices.at(0);
 
-        m_device = physical_device.createDevice({});
+        auto queue_family_properties = physical_device.getQueueFamilyProperties();
+
+        bool has_dedicated_compute_queue = false;
+        bool has_dedicated_transfer_queue = false;
+        bool has_dedicated_draw_queue = false;
+
+        uint32_t compute_queue_index,
+            draw_queue_index,
+            transfer_queue_index;
+
+        for (size_t i = 0; i < queue_family_properties.size(); i++) {
+            // If there is a dedicated queue, give preference to it.
+            if (queue_family_properties[i].queueFlags & vk::QueueFlagBits::eCompute && !has_dedicated_compute_queue) {
+                if (!(queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics)) {
+                    has_dedicated_compute_queue = true;
+                    compute_queue_index = i;
+                } else {
+                    compute_queue_index = i;
+                }
+
+                continue;
+            }
+
+            if (queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics && !has_dedicated_draw_queue) {
+                if (!(queue_family_properties[i].queueFlags & vk::QueueFlagBits::eCompute)) {
+                    has_dedicated_draw_queue = true;
+                    draw_queue_index = i;
+                } else {
+                    draw_queue_index = i;
+                }
+
+                continue;
+            }
+
+            if (queue_family_properties[i].queueFlags & vk::QueueFlagBits::eTransfer && !has_dedicated_transfer_queue) {
+                if (!(queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics)) {
+                    has_dedicated_transfer_queue = true;
+                    transfer_queue_index = i;
+                } else {
+                    transfer_queue_index = i;
+                }
+
+                continue;
+            }
+
+            if (has_dedicated_compute_queue && has_dedicated_draw_queue && has_dedicated_transfer_queue)
+                break;
+        }
+
+        auto queue_create_infos = std::array {
+            vk::DeviceQueueCreateInfo(
+                vk::DeviceQueueCreateFlags { 0u },
+                draw_queue_index,
+                1
+            ),
+            vk::DeviceQueueCreateInfo(
+                vk::DeviceQueueCreateFlags { 0u },
+                compute_queue_index,
+                1
+            ),
+            vk::DeviceQueueCreateInfo(
+                vk::DeviceQueueCreateFlags { 0u },
+                transfer_queue_index,
+                1
+            ),
+        };
+
+        m_device = physical_device.createDevice(
+            vk::DeviceCreateInfo(
+                vk::DeviceCreateFlags { 0u },
+                queue_create_infos.size(),      // Queue create info count.
+                queue_create_infos.data(),      // Queue create pointer.
+                vulkan_validation_layers.size(),// Device layer count.
+                &vulkan_validation_layers[0],   // Device layer pointer.
+                vulkan_device_extensions.size(),// Extension count.
+                &vulkan_device_extensions[0],   // Extension list.
+                nullptr,                        // Enabled features.
+                nullptr                         // pNext.
+            )
+        );
     }
 
     vk::Device& VkDeviceObject::getDevice()
