@@ -16,3 +16,12 @@
 [submodule "src/third_party/google/skia"]
 	path = src/third_party/google/skia
 	url = https://github.com/google/skia
+[submodule "src/third_party/khronos/spirv-headers"]
+	path = src/third_party/khronos/spirv-headers
+	url = https://github.com/KhronosGroup/SPIRV-Headers
+[submodule "src/third_party/khronos/vulkan-utility-binaries"]
+	path = src/third_party/khronos/vulkan-utility-binaries
+	url = https://github.com/KhronosGroup/Vulkan-Utility-Libraries
+[submodule "src/third_party/khronos/spirv-tools"]
+	path = src/third_party/khronos/spirv-tools
+	url = https://github.com/KhronosGroup/SPIRV-Tools

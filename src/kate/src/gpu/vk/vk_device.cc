@@ -21,8 +21,8 @@ namespace kate::gpu {
         bool has_dedicated_draw_queue = false;
 
         uint32_t compute_queue_index,
-            draw_queue_index,
-            transfer_queue_index;
+                draw_queue_index,
+                transfer_queue_index;
 
         for (size_t i = 0; i < queue_family_properties.size(); i++) {
             // If there is a dedicated queue, give preference to it.
@@ -33,8 +33,6 @@ namespace kate::gpu {
                 } else {
                     compute_queue_index = i;
                 }
-
-                continue;
             }
 
             if (queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics && !has_dedicated_draw_queue) {
@@ -44,8 +42,6 @@ namespace kate::gpu {
                 } else {
                     draw_queue_index = i;
                 }
-
-                continue;
             }
 
             if (queue_family_properties[i].queueFlags & vk::QueueFlagBits::eTransfer && !has_dedicated_transfer_queue) {
@@ -55,8 +51,6 @@ namespace kate::gpu {
                 } else {
                     transfer_queue_index = i;
                 }
-
-                continue;
             }
 
             if (has_dedicated_compute_queue && has_dedicated_draw_queue && has_dedicated_transfer_queue)

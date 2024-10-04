@@ -2,6 +2,8 @@ cmake_minimum_required(VERSION 3.22)
 
 project(TsumikiProject)
 
+include_directories(third_party/khronos/vulkan-hpp/Vulkan-Headers/include)
+
 add_subdirectory(kate)
 
 add_executable(tsumiki)
