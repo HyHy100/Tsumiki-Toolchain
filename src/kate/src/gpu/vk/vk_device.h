@@ -18,11 +18,20 @@ namespace kate::gpu {
 
         vk::PhysicalDevice& getPhysicalDevice();
 
+        std::shared_ptr<VkAdapterObject> getAdapter();
+
         std::shared_ptr<Texture> createTexture(
             Texture::Dimension dimension,
             Texture::Format format,
             const Extent& extent,
             uint16_t layers
+        ) override;
+
+        std::shared_ptr<Swapchain> createSwapchain(
+            const PlatformHandle& handle,
+            uint16_t width,
+            uint16_t height,
+            const SwapchainFlags& flags
         ) override;
 
         uint32_t getMemoryTypeIndex(uint32_t typeBits, vk::MemoryPropertyFlags properties);

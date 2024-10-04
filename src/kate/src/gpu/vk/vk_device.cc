@@ -2,6 +2,7 @@
 #include "vk_config.h"
 #include "vk_device.h"
 #include "vk_texture.h"
+#include "vk_swapchain.h"
 
 namespace kate::gpu {
     VkDeviceObject::VkDeviceObject(
@@ -83,9 +84,9 @@ namespace kate::gpu {
                 queue_create_infos.size(),      // Queue create info count.
                 queue_create_infos.data(),      // Queue create pointer.
                 vulkan_validation_layers.size(),// Device layer count.
-                &vulkan_validation_layers[0],   // Device layer pointer.
+                vulkan_validation_layers.data(),// Device layer pointer.
                 vulkan_device_extensions.size(),// Extension count.
-                &vulkan_device_extensions[0],   // Extension list.
+                vulkan_device_extensions.data(),// Extension list.
                 nullptr,                        // Enabled features.
                 nullptr                         // pNext.
             )
@@ -116,6 +117,27 @@ namespace kate::gpu {
             extent,
             layers
         );
+    }
+
+    std::shared_ptr<Swapchain> VkDeviceObject::createSwapchain(
+        const PlatformHandle& handle,
+        uint16_t width,
+        uint16_t height,
+        const SwapchainFlags& flags
+    )
+    {
+        return std::make_shared<VkSwapChainObject>(
+            shared_from_this(),
+            handle,
+            width,
+            height,
+            flags
+        );
+    }
+
+    std::shared_ptr<VkAdapterObject> VkDeviceObject::getAdapter()
+    {
+        return m_adapter;
     }
 
     uint32_t VkDeviceObject::getMemoryTypeIndex(uint32_t typeBits, vk::MemoryPropertyFlags properties)

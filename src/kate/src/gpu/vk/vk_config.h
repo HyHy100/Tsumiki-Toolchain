@@ -5,22 +5,34 @@
 
 namespace kate::gpu {
 #   ifndef NDEBUG
-    std::array<const char* const, 1> vulkan_validation_layers = {
+    #define ENABLE_VALIDATION_LAYERS
+#   endif
+
+#   ifndef ENABLE_VALIDATION_LAYERS
+    static inline std::array<const char* const, 1> vulkan_validation_layers = {
         "VK_LAYER_KHRONOS_validation"
     };
+#   else
+    static inline std::array<const char* const, 1> vulkan_validation_layers = {};
+#   endif
 
-    std::array<const char* const, 1> vulkan_instance_extensions = {
+#ifndef NDEBUG
+    static inline std::array<const char* const, 1> vulkan_instance_extensions = {
         VK_EXT_DEBUG_UTILS_EXTENSION_NAME
     };
 
-    std::array<const char* const, 1> vulkan_device_extensions = {};
+    static inline std::array<const char* const, 1> vulkan_device_extensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
 #   else
-    std::array<const char* const, 1> vulkan_validation_layers = {};
-
-    std::array<const char* const, 1> vulkan_instance_extensions = {
+    static inline std::array<const char* const, 1> vulkan_instance_extensions = {
         // ...
     };
 
-    std::array<const char* const, 1> vulkan_device_extensions = {};
+    static inline std::array<const char* const, 1> vulkan_device_extensions = {
+        VK_KHR_SWAPCHAIN_EXTENSION_NAME
+    };
 #   endif
+
+    constexpr vk::PresentModeKHR kVkDefaultPresentationMode = vk::PresentModeKHR::eFifo;
 }

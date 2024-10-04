@@ -72,4 +72,9 @@ namespace kate::gpu {
     {
         return m_instance;
     }
+
+    std::shared_ptr<Adapter> Adapter::MakeVk()
+    {
+        return std::make_shared<VkAdapterObject>();
+    }
 }

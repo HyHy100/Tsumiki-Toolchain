@@ -1,0 +1,134 @@
+#include "vk_swapchain.h"
+#include "vk_adapter.h"
+#include "vk_device.h"
+#include "vk_config.h"
+
+#ifdef __linux
+#include <xcb/xcb.h>
+#include "vulkan/vulkan_xcb.h"
+#endif
+
+#include <limits>
+
+namespace kate::gpu {
+    VkSwapChainObject::VkSwapChainObject(
+        std::shared_ptr<VkDeviceObject> device,
+        const PlatformHandle& handle,
+        uint16_t width,
+        uint16_t height,
+        const SwapchainFlags& flags
+    ) : m_device { device }
+    {
+        auto& instance = m_device->getAdapter()->getInstance();
+
+        #ifdef __linux
+        VkXcbSurfaceCreateInfoKHR create_info = {};
+        create_info.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+        create_info.pNext = NULL;
+        create_info.connection = reinterpret_cast<xcb_connection_t*>(handle.xcb_connection);
+        create_info.window = reinterpret_cast<xcb_window_t>(handle.xcb_window);
+        vkCreateXcbSurfaceKHR(
+            instance,
+            &create_info,
+            nullptr,
+            // Renan: it is unlikely, but maybe this cast could cause issues in the future.
+            reinterpret_cast<VkSurfaceKHR*>(&m_surface)
+        );
+        #endif
+
+        auto& physical_device = m_device->getPhysicalDevice();
+
+        auto props = physical_device.getQueueFamilyProperties();
+
+        std::vector<VkBool32> isPresentationSupported(props.size());
+
+        for (auto i = 0; i < props.size(); i++) {
+            auto& prop = props[i];
+
+            isPresentationSupported[i] = m_device->getPhysicalDevice().getSurfaceSupportKHR(i, m_surface);
+        }
+
+        uint32_t present_queue_index = std::numeric_limits<uint32_t>::max();
+
+        for (auto i = 0; i < props.size(); i++) {
+            auto& prop = props[i];
+
+            if (isPresentationSupported[i]) {
+                present_queue_index = i;
+
+                break;
+            }
+        }
+
+        if (present_queue_index == std::numeric_limits<uint32_t>::max()) {
+            // abort
+            throw "(Vulkan): Unable to find a vulkan queue that supports presentation.";
+        }
+
+        auto surface_capabilities = m_device->getPhysicalDevice().getSurfaceCapabilitiesKHR(m_surface);
+
+        VkExtent2D swapchainExtent;
+
+        if (surface_capabilities.currentExtent.width = std::numeric_limits<uint32_t>::max()) {
+            swapchainExtent.width = std::clamp(
+                static_cast<uint32_t>(width), 
+                surface_capabilities.minImageExtent.width, 
+                surface_capabilities.maxImageExtent.width
+            );
+
+            swapchainExtent.height = std::clamp(
+                static_cast<uint32_t>(height), 
+                surface_capabilities.minImageExtent.height, 
+                surface_capabilities.maxImageExtent.height
+            );
+        } else {
+            swapchainExtent = surface_capabilities.currentExtent;
+        }
+
+        vk::SurfaceTransformFlagBitsKHR pre_transform;
+        if (surface_capabilities.supportedTransforms & vk::SurfaceTransformFlagBitsKHR::eIdentity)
+            pre_transform = vk::SurfaceTransformFlagBitsKHR::eIdentity;
+        else 
+            pre_transform = surface_capabilities.currentTransform;
+
+        vk::CompositeAlphaFlagBitsKHR composite_alpha = vk::CompositeAlphaFlagBitsKHR::eOpaque;
+
+        std::array<vk::CompositeAlphaFlagBitsKHR, 4> composite_alpha_flags {
+            vk::CompositeAlphaFlagBitsKHR::eOpaque,
+            vk::CompositeAlphaFlagBitsKHR::ePreMultiplied,
+            vk::CompositeAlphaFlagBitsKHR::ePostMultiplied,
+            vk::CompositeAlphaFlagBitsKHR::eInherit
+        };
+
+        for (auto& composite_alpha_flag : composite_alpha_flags)
+            if (surface_capabilities.supportedCompositeAlpha & composite_alpha_flag) {
+                composite_alpha = composite_alpha_flag;
+                break;
+            }
+
+        auto surface_formats = m_device->getPhysicalDevice().getSurfaceFormatsKHR(m_surface);
+
+        if (surface_formats.empty())
+            throw "no surface formats available, please check your GPU drivers.";
+
+        vk::SwapchainCreateInfoKHR swapchain_ci( 
+            vk::SwapchainCreateFlagsKHR {},
+            m_surface,
+            std::clamp( 3u, surface_capabilities.minImageCount, surface_capabilities.maxImageCount ),
+            vk::Format::eB8G8R8A8Unorm,
+            vk::ColorSpaceKHR::eSrgbNonlinear,
+            swapchainExtent,
+            1,
+            vk::ImageUsageFlagBits::eColorAttachment,
+            vk::SharingMode::eExclusive,
+            {},
+            pre_transform,
+            composite_alpha,
+            kVkDefaultPresentationMode,
+            true,
+            nullptr
+        );
+
+        m_swapchain = m_device->getDevice().createSwapchainKHR(swapchain_ci);
+    }
+}
