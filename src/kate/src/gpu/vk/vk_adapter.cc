@@ -12,9 +12,13 @@ namespace kate::gpu {
             vk::makeApiVersion(1, 0, 0, 0)  // Vulkan API version
         );
         
+#       ifndef NDEBUG
         std::array<const char* const, 1> layers {
             "VK_LAYER_KHRONOS_validation"
         };
+#       else
+        std::array<const char* const, 0> layers {};
+#       endif
 
         m_instance = vk::createInstance(
             vk::InstanceCreateInfo(
