@@ -5,6 +5,9 @@ project(TsumikiProject)
 include_directories(third_party/khronos/vulkan-hpp/Vulkan-Headers/include)
 include_directories(${CMAKE_SOURCE_DIR})
 
+set(SDL_STATIC ON)
+add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/SDL)
+
 add_subdirectory(base)
 add_subdirectory(kate)
 

@@ -3,17 +3,20 @@
 #include <array>
 #include <vulkan/vulkan.hpp>
 
+#define VULKAN_DISABLE_VALIDATION_LAYERS
+
 namespace kate::gpu {
-#   ifndef NDEBUG
+    // enable validation layers unless explicitely disabled.
+#   if !defined(NDEBUG) && !defined(VULKAN_DISABLE_VALIDATION_LAYERS)
     #define ENABLE_VALIDATION_LAYERS
 #   endif
 
-#   ifndef ENABLE_VALIDATION_LAYERS
+#   ifdef ENABLE_VALIDATION_LAYERS
     static inline std::array<const char* const, 1> vulkan_validation_layers = {
         "VK_LAYER_KHRONOS_validation"
     };
 #   else
-    static inline std::array<const char* const, 1> vulkan_validation_layers = {};
+    static inline std::array<const char* const, 0> vulkan_validation_layers = {};
 #   endif
 
 #ifndef NDEBUG
@@ -25,7 +28,7 @@ namespace kate::gpu {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 #   else
-    static inline std::array<const char* const, 1> vulkan_instance_extensions = {
+    static inline std::array<const char* const, 0> vulkan_instance_extensions = {
         // ...
     };
 

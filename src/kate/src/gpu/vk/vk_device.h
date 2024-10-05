@@ -35,9 +35,13 @@ namespace kate::gpu {
         ) override;
 
         uint32_t getMemoryTypeIndex(uint32_t typeBits, vk::MemoryPropertyFlags properties);
+
+        size_t numQueues() const override;
+
+        std::shared_ptr<Queue> getQueue(size_t index) override;
     private:
         std::shared_ptr<VkAdapterObject> m_adapter;
-
+        std::vector<std::shared_ptr<Queue>> m_queues;
         vk::Device m_device;
         vk::PhysicalDevice m_physicalDevice;
     };

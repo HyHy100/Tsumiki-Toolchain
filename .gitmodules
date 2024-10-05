@@ -25,3 +25,6 @@
 [submodule "src/third_party/khronos/spirv-tools"]
 	path = src/third_party/khronos/spirv-tools
 	url = https://github.com/KhronosGroup/SPIRV-Tools
+[submodule "src/third_party/SDL"]
+	path = src/third_party/SDL
+	url = https://github.com/libsdl-org/SDL
