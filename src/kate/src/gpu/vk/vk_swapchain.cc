@@ -22,7 +22,7 @@ namespace kate::gpu {
     {
         auto& instance = m_device->getAdapter()->getInstance();
 
-        #ifdef __linux
+#       ifdef __linux
         VkXlibSurfaceCreateInfoKHR create_info = {};
         create_info.flags = 0;
         create_info.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
@@ -36,7 +36,9 @@ namespace kate::gpu {
             // Renan: it is unlikely, but maybe this cast could cause issues in the future.
             reinterpret_cast<VkSurfaceKHR*>(&m_surface)
         );
-        #endif
+#       else
+#           error "Platform is not supported yet."
+#       endif
 
         auto& physical_device = m_device->getPhysicalDevice();
 
