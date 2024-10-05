@@ -163,5 +163,29 @@ namespace kate::gpu {
         m_swapchain = m_device->getDevice().createSwapchainKHR(swapchain_ci);
 
         m_swapchainImages = m_device->getDevice().getSwapchainImagesKHR(m_swapchain);
+
+        for (size_t i = 0; i < m_swapchainImages.size(); i++) {
+            m_swapchainImageViews[i] = m_device->getDevice().createImageView(
+                vk::ImageViewCreateInfo(
+                    vk::ImageViewCreateFlags {},
+                    m_swapchainImages[i],
+                    vk::ImageViewType::e2D,
+                    vk::Format::eB8G8R8A8Unorm,
+                    vk::ComponentMapping {
+                        vk::ComponentSwizzle::eIdentity,
+                        vk::ComponentSwizzle::eIdentity,
+                        vk::ComponentSwizzle::eIdentity,
+                        vk::ComponentSwizzle::eIdentity
+                    },
+                    vk::ImageSubresourceRange(
+                        vk::ImageAspectFlagBits::eColor,
+                        0, // base mip level
+                        1, // mip level
+                        0, // base array layer
+                        1  // layer count
+                    )
+                )
+            );
+        }
     }
 }

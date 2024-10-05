@@ -36,7 +36,10 @@ namespace kate::gpu {
             const SwapchainFlags& flags
         ) override;
 
-        uint32_t getMemoryTypeIndex(uint32_t typeBits, vk::MemoryPropertyFlags properties);
+        uint32_t getMemoryTypeIndex(
+            uint32_t typeBits, 
+            vk::MemoryPropertyFlags properties
+        );
 
         size_t numQueues() const override;
 
