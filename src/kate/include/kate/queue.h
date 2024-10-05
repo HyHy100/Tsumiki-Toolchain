@@ -11,7 +11,8 @@ namespace kate::gpu {
     enum class QueueFlagBits {
         kCompute = 0x1,
         kGraphics = 0x2,
-        kTransfer = 0x4
+        kTransfer = 0x4,
+        kPresentation = 0x8
     };
 
     using QueueFlags = base::Flags<QueueFlagBits>;

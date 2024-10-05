@@ -8,12 +8,8 @@
 
 namespace kate::gpu {
     struct PlatformHandle {
-        // X server
-        uint32_t xcb_window;
-        void* xcb_connection;
-
-        // TODO: Wayland
-        // TODO: Windows
+        void* nwd;
+        void* ndt;
     };
 
     enum class SwapchainFlagsBits {

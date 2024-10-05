@@ -3,6 +3,11 @@
 #include <array>
 #include <vulkan/vulkan.hpp>
 
+#ifdef __linux
+#   include <X11/Xlib.h>
+#   include <vulkan/vulkan_xlib.h>
+#endif
+
 #define VULKAN_DISABLE_VALIDATION_LAYERS
 
 namespace kate::gpu {
@@ -12,7 +17,7 @@ namespace kate::gpu {
 #   endif
 
 #   ifdef ENABLE_VALIDATION_LAYERS
-    static inline std::array<const char* const, 1> vulkan_validation_layers = {
+    static inline std::array vulkan_validation_layers = {
         "VK_LAYER_KHRONOS_validation"
     };
 #   else
@@ -20,8 +25,12 @@ namespace kate::gpu {
 #   endif
 
 #ifndef NDEBUG
-    static inline std::array<const char* const, 1> vulkan_instance_extensions = {
-        VK_EXT_DEBUG_UTILS_EXTENSION_NAME
+    static inline std::array vulkan_instance_extensions = {
+        VK_EXT_DEBUG_UTILS_EXTENSION_NAME,
+        VK_KHR_SURFACE_EXTENSION_NAME,
+#       ifdef __linux
+        VK_KHR_XLIB_SURFACE_EXTENSION_NAME
+#       endif
     };
 
     static inline std::array<const char* const, 1> vulkan_device_extensions = {
@@ -32,7 +41,7 @@ namespace kate::gpu {
         // ...
     };
 
-    static inline std::array<const char* const, 1> vulkan_device_extensions = {
+    static inline std::array vulkan_device_extensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME
     };
 #   endif

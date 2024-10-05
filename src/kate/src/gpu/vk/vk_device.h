@@ -9,6 +9,7 @@
 
 namespace kate::gpu {
     class VkAdapterObject;
+    class VkSwapChainObject;
 
     class VkDeviceObject : public Device, public std::enable_shared_from_this<VkDeviceObject> {
     public:
@@ -39,7 +40,13 @@ namespace kate::gpu {
         size_t numQueues() const override;
 
         std::shared_ptr<Queue> getQueue(size_t index) override;
+
+        std::shared_ptr<Queue> getQueue(QueueFlags index) override;
     private:
+        friend class VkSwapChainObject;
+
+        void setPresentationQueue(uint32_t familyIndex, uint32_t queueIndex);
+
         std::shared_ptr<VkAdapterObject> m_adapter;
         std::vector<std::shared_ptr<Queue>> m_queues;
         vk::Device m_device;

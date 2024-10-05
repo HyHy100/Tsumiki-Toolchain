@@ -4,8 +4,8 @@
 #include "vk_config.h"
 
 #ifdef __linux
-#include <xcb/xcb.h>
-#include "vulkan/vulkan_xcb.h"
+#   include <X11/Xlib.h>
+#   include <vulkan/vulkan_xlib.h>
 #endif
 
 #include <limits>
@@ -22,12 +22,13 @@ namespace kate::gpu {
         auto& instance = m_device->getAdapter()->getInstance();
 
         #ifdef __linux
-        VkXcbSurfaceCreateInfoKHR create_info = {};
-        create_info.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
+        VkXlibSurfaceCreateInfoKHR create_info = {};
+        create_info.flags = 0;
+        create_info.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
         create_info.pNext = NULL;
-        create_info.connection = reinterpret_cast<xcb_connection_t*>(handle.xcb_connection);
-        create_info.window = reinterpret_cast<xcb_window_t>(handle.xcb_window);
-        vkCreateXcbSurfaceKHR(
+        create_info.window = reinterpret_cast<XID>(handle.nwd);
+        create_info.dpy = reinterpret_cast<Display*>(handle.ndt);
+        vkCreateXlibSurfaceKHR(
             instance,
             &create_info,
             nullptr,
@@ -45,31 +46,38 @@ namespace kate::gpu {
         for (auto i = 0; i < props.size(); i++) {
             auto& prop = props[i];
 
-            isPresentationSupported[i] = m_device->getPhysicalDevice().getSurfaceSupportKHR(i, m_surface);
+            isPresentationSupported[i] = physical_device.getSurfaceSupportKHR(i, m_surface);
         }
 
-        uint32_t present_queue_index = std::numeric_limits<uint32_t>::max();
+        uint32_t present_queue_family_index = 
+            std::numeric_limits<uint32_t>::max();
 
         for (auto i = 0; i < props.size(); i++) {
             auto& prop = props[i];
 
             if (isPresentationSupported[i]) {
-                present_queue_index = i;
+                present_queue_family_index = i;
 
                 break;
             }
         }
 
-        if (present_queue_index == std::numeric_limits<uint32_t>::max()) {
+        if (present_queue_family_index == 
+                std::numeric_limits<uint32_t>::max()) {
             // abort
             throw "(Vulkan): Unable to find a vulkan queue that supports presentation.";
         }
 
-        auto surface_capabilities = m_device->getPhysicalDevice().getSurfaceCapabilitiesKHR(m_surface);
+        device->setPresentationQueue(present_queue_family_index, 0);
+
+        auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(
+            m_surface
+        );
 
         VkExtent2D swapchainExtent;
 
-        if (surface_capabilities.currentExtent.width = std::numeric_limits<uint32_t>::max()) {
+        if (surface_capabilities.currentExtent.width == 
+            std::numeric_limits<uint32_t>::max()) {
             swapchainExtent.width = std::clamp(
                 static_cast<uint32_t>(width), 
                 surface_capabilities.minImageExtent.width, 
@@ -120,7 +128,7 @@ namespace kate::gpu {
             swapchainExtent,
             1,
             vk::ImageUsageFlagBits::eColorAttachment,
-            vk::SharingMode::eExclusive,
+            vk::SharingMode::eConcurrent,
             {},
             pre_transform,
             composite_alpha,
@@ -130,5 +138,7 @@ namespace kate::gpu {
         );
 
         m_swapchain = m_device->getDevice().createSwapchainKHR(swapchain_ci);
+
+        m_swapchainImages = m_device->getDevice().getSwapchainImagesKHR(m_swapchain);
     }
 }

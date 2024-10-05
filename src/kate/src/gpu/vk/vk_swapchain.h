@@ -20,6 +20,7 @@ namespace kate::gpu {
         );
     private:
         std::shared_ptr<VkDeviceObject> m_device;
+        std::vector<vk::Image> m_swapchainImages;
         vk::SwapchainKHR m_swapchain;
         vk::SurfaceKHR m_surface;
     };

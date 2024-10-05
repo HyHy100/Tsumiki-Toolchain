@@ -26,12 +26,12 @@ namespace base {
             return m_bitmask;
         }
 
-        Flags<Type>& operator&(const Flags<Type>& rhs) const
+        Flags<Type> operator&(const Flags<Type>& rhs) const
         {
             return m_bitmask & rhs;
         }
 
-        Flags<Type>& operator|(const Flags<Type>& rhs) const
+        Flags<Type> operator|(const Flags<Type>& rhs) const
         {
             return m_bitmask | rhs;
         }

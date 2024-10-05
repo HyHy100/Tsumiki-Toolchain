@@ -97,5 +97,7 @@ namespace kate::gpu {
         virtual size_t numQueues() const = 0;
 
         virtual std::shared_ptr<Queue> getQueue(size_t index) = 0;
+
+        virtual std::shared_ptr<Queue> getQueue(QueueFlags flags) = 0;
     };
 }

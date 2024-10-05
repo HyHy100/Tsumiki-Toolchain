@@ -102,7 +102,7 @@ namespace kate::gpu {
             )
         );
 
-        m_queues.push_back(
+        /*m_queues.push_back(
             std::make_shared<VkQueueObject>(
                 QueueFlagBits::kGraphics,
                 shared_from_this(),
@@ -124,7 +124,7 @@ namespace kate::gpu {
                 shared_from_this(),
                 m_device.getQueue(transfer_queue_family_index, 0)
             )
-        );
+        );*/
     }
 
     vk::Device& VkDeviceObject::getDevice()
@@ -177,6 +177,31 @@ namespace kate::gpu {
     std::shared_ptr<Queue> VkDeviceObject::getQueue(size_t index)
     {
         return (index < m_queues.size()) ? m_queues[index] : nullptr;
+    }
+
+    std::shared_ptr<Queue> VkDeviceObject::getQueue(QueueFlags flags)
+    {
+        for (auto& queue : m_queues) {
+            if (queue->flags() & flags)
+                return queue;
+        }
+
+        // (Renan): TODO: Make this path not reachable.
+        return nullptr;
+    }
+
+    void VkDeviceObject::setPresentationQueue(
+        uint32_t familyIndex,
+        uint32_t queueIndex
+    )
+    {
+        m_queues.push_back(
+            std::make_shared<VkQueueObject>(
+                QueueFlagBits::kPresentation,
+                shared_from_this(),
+                m_device.getQueue(familyIndex, queueIndex)
+            )
+        );
     }
 
     std::shared_ptr<VkAdapterObject> VkDeviceObject::getAdapter()
