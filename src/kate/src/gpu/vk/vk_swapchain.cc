@@ -2,6 +2,7 @@
 #include "vk_adapter.h"
 #include "vk_device.h"
 #include "vk_config.h"
+#include "vk_queue.h"
 
 #ifdef __linux
 #   include <X11/Xlib.h>
@@ -68,7 +69,14 @@ namespace kate::gpu {
             throw "(Vulkan): Unable to find a vulkan queue that supports presentation.";
         }
 
-        device->setPresentationQueue(present_queue_family_index, 0);
+        device->setPresentationQueue(
+            std::make_shared<VkQueueObject>(
+                QueueFlagBits::kPresentation,
+                device,
+                present_queue_family_index,
+                0
+            )
+        );
 
         auto surface_capabilities = physical_device.getSurfaceCapabilitiesKHR(
             m_surface
@@ -119,6 +127,19 @@ namespace kate::gpu {
         if (surface_formats.empty())
             throw "no surface formats available, please check your GPU drivers.";
 
+        auto* vk_graphics_queue = static_cast<VkQueueObject*>(
+            m_device->getQueue(QueueFlagBits::kGraphics).get()
+        );
+
+        auto* vk_presentation_queue = static_cast<VkQueueObject*>(
+            m_device->getQueue(QueueFlagBits::kPresentation).get()
+        );
+
+        std::array<uint32_t, 2> queueFamilyIndices = {
+            vk_graphics_queue->queueFamilyIndex(),
+            vk_presentation_queue->queueFamilyIndex()
+        };
+
         vk::SwapchainCreateInfoKHR swapchain_ci( 
             vk::SwapchainCreateFlagsKHR {},
             m_surface,
@@ -129,7 +150,7 @@ namespace kate::gpu {
             1,
             vk::ImageUsageFlagBits::eColorAttachment,
             vk::SharingMode::eConcurrent,
-            {},
+            queueFamilyIndices,
             pre_transform,
             composite_alpha,
             kVkDefaultPresentationMode,

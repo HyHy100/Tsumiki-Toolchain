@@ -10,6 +10,7 @@
 namespace kate::gpu {
     class VkAdapterObject;
     class VkSwapChainObject;
+    class VkQueueObject;
 
     class VkDeviceObject : public Device, public std::enable_shared_from_this<VkDeviceObject> {
     public:
@@ -45,7 +46,9 @@ namespace kate::gpu {
     private:
         friend class VkSwapChainObject;
 
-        void setPresentationQueue(uint32_t familyIndex, uint32_t queueIndex);
+        void setPresentationQueue(
+            std::shared_ptr<VkQueueObject> queue
+        );
 
         std::shared_ptr<VkAdapterObject> m_adapter;
         std::vector<std::shared_ptr<Queue>> m_queues;

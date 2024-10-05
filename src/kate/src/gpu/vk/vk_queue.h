@@ -13,10 +13,17 @@ namespace kate::gpu {
         VkQueueObject(
             const QueueFlags& flags,
             std::shared_ptr<VkDeviceObject> device,
-            vk::Queue queue
+            uint32_t queueFamilyIndex,
+            uint32_t queueIndex
         );
+
+        uint32_t queueFamilyIndex() const;
+
+        uint32_t queueIndex() const;
     private:
         std::shared_ptr<VkDeviceObject> m_device;
         vk::Queue m_queue;
+        uint32_t m_queueFamilyIndex;
+        uint32_t m_queueIndex;
     };
 }

@@ -32,7 +32,7 @@ namespace kate::gpu {
 
         for (size_t i = 0; i < queue_family_properties.size(); i++) {
             // If there is a dedicated queue, give preference to it.
-            if (queue_family_properties[i].queueFlags & vk::QueueFlagBits::eCompute && !has_dedicated_compute_queue) {
+            if ((queue_family_properties[i].queueFlags & vk::QueueFlagBits::eCompute) && !has_dedicated_compute_queue) {
                 if (!(queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics)) {
                     has_dedicated_compute_queue = true;
                     compute_queue_family_index = i;
@@ -41,7 +41,7 @@ namespace kate::gpu {
                 }
             }
 
-            if (queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics && !has_dedicated_draw_queue) {
+            if ((queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics) && !has_dedicated_draw_queue) {
                 if (!(queue_family_properties[i].queueFlags & vk::QueueFlagBits::eCompute)) {
                     has_dedicated_draw_queue = true;
                     draw_queue_family_index = i;
@@ -50,7 +50,7 @@ namespace kate::gpu {
                 }
             }
 
-            if (queue_family_properties[i].queueFlags & vk::QueueFlagBits::eTransfer && !has_dedicated_transfer_queue) {
+            if ((queue_family_properties[i].queueFlags & vk::QueueFlagBits::eTransfer) && !has_dedicated_transfer_queue) {
                 if (!(queue_family_properties[i].queueFlags & vk::QueueFlagBits::eGraphics)) {
                     has_dedicated_transfer_queue = true;
                     transfer_queue_family_index = i;
@@ -65,9 +65,9 @@ namespace kate::gpu {
 
         if (draw_queue_family_index == std::numeric_limits<uint32_t>::max()) 
             throw "[Vulkan] Error while trying to create a draw queue.";
-        else if (transfer_queue_family_index == std::numeric_limits<uint32_t>::max())
+        if (transfer_queue_family_index == std::numeric_limits<uint32_t>::max())
             throw "[Vulkan] Error while trying to create a transfer queue.";
-        else if (compute_queue_family_index == std::numeric_limits<uint32_t>::max())
+        if (compute_queue_family_index == std::numeric_limits<uint32_t>::max())
             throw "[Vulkan] Error while trying to create a compute queue.";
 
         auto queue_create_infos = std::array {
@@ -102,11 +102,12 @@ namespace kate::gpu {
             )
         );
 
-        /*m_queues.push_back(
+        m_queues.push_back(
             std::make_shared<VkQueueObject>(
                 QueueFlagBits::kGraphics,
                 shared_from_this(),
-                m_device.getQueue(draw_queue_family_index, 0)
+                draw_queue_family_index,
+                0
             )
         );
 
@@ -114,7 +115,8 @@ namespace kate::gpu {
             std::make_shared<VkQueueObject>(
                 QueueFlagBits::kCompute,
                 shared_from_this(),
-                m_device.getQueue(compute_queue_family_index, 0)
+                compute_queue_family_index,
+                0
             )
         );
 
@@ -122,9 +124,10 @@ namespace kate::gpu {
             std::make_shared<VkQueueObject>(
                 QueueFlagBits::kTransfer,
                 shared_from_this(),
-                m_device.getQueue(transfer_queue_family_index, 0)
+                transfer_queue_family_index,
+                0
             )
-        );*/
+        );
     }
 
     vk::Device& VkDeviceObject::getDevice()
@@ -191,17 +194,10 @@ namespace kate::gpu {
     }
 
     void VkDeviceObject::setPresentationQueue(
-        uint32_t familyIndex,
-        uint32_t queueIndex
+        std::shared_ptr<VkQueueObject> queue
     )
     {
-        m_queues.push_back(
-            std::make_shared<VkQueueObject>(
-                QueueFlagBits::kPresentation,
-                shared_from_this(),
-                m_device.getQueue(familyIndex, queueIndex)
-            )
-        );
+        m_queues.push_back(queue);
     }
 
     std::shared_ptr<VkAdapterObject> VkDeviceObject::getAdapter()
