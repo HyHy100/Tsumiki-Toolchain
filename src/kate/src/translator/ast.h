@@ -348,7 +348,7 @@ namespace kate::sc::ast {
 
         CtxRef<Expr>& expr();
     private:
-        CtxRef<ExprStat> m_expr;
+        CtxRef<Expr> m_expr;
     };
 
     class IfStat final : public base::rtti::Castable<IfStat, Stat> {
@@ -399,13 +399,14 @@ namespace kate::sc::ast {
 
     class WhileStat final : public base::rtti::Castable<WhileStat, Stat> {
     public:
-        WhileStat(CtxRef<Expr>&& condition);
+        WhileStat(CtxRef<Expr>&& condition, CtxRef<BlockStat>&& block);
 
         CtxRef<TreeNode> clone() override;
 
         CtxRef<Expr>& condition();
     private:
         CtxRef<Expr> m_condition;
+        CtxRef<BlockStat> m_block;
     };
 
     class StructDecl final : public base::rtti::Castable<StructDecl, Decl> {

@@ -127,6 +127,136 @@ namespace kate::sc::ast {
         return m_attrs;
     }
 
+    BlockStat::BlockStat(
+        std::vector<CtxRef<Stat>>&& stats
+    ) : m_stats { std::move(stats) }
+    {
+    }
+
+    CtxRef<TreeNode> BlockStat::clone()
+    {
+        return GetNodeContext().make<BlockStat>(
+            GetNodeContext().clone(m_stats)
+        );
+    }
+
+    std::vector<CtxRef<Stat>>& BlockStat::stats()
+    {
+        return m_stats;
+    }
+
+    ExprStat::ExprStat(CtxRef<Expr>&& expr) 
+        : m_expr { std::move(expr) }
+    {
+    }
+
+    CtxRef<TreeNode> ExprStat::clone()
+    {
+        return GetNodeContext().make<ExprStat>(
+            GetNodeContext().clone(m_expr)
+        );
+    }
+
+    CtxRef<Expr>& ExprStat::expr()
+    {
+        return m_expr;
+    }
+
+    IfStat::IfStat(
+        CtxRef<Expr>&& condition,
+        CtxRef<BlockStat>&& block,
+        CtxRef<BlockStat>&& elseBlock
+    ) : m_condition { std::move(condition) },
+        m_block { std::move(block) },
+        m_elseBlock { std::move(elseBlock) }
+    {
+    }
+
+    CtxRef<TreeNode> IfStat::clone()
+    {
+        return GetNodeContext().make<IfStat>(
+            GetNodeContext().clone(m_condition),
+            GetNodeContext().clone(m_block),
+            m_elseBlock ? GetNodeContext().clone(m_elseBlock) : CtxRef<BlockStat>()
+        );
+    }
+
+    CtxRef<Expr>& IfStat::condition()
+    {
+        return m_condition;
+    }
+
+    CtxRef<BlockStat>& IfStat::block()
+    {
+        return m_block;
+    }
+
+    CtxRef<BlockStat>& IfStat::elseBlock()
+    {
+        return m_elseBlock;
+    }
+
+    ForStat::ForStat(
+        CtxRef<ExprStat>&& initializer,
+        CtxRef<Expr>&& condition,
+        CtxRef<ExprStat>&& continuing,
+        CtxRef<BlockStat>&& block
+    ) : m_initializer { std::move(initializer) },
+        m_condition { std::move(condition) },
+        m_continuing { std::move(continuing) },
+        m_block { std::move(block) }
+    {
+    }
+
+    CtxRef<TreeNode> ForStat::clone()
+    {
+        return GetNodeContext().make<ForStat>(
+            GetNodeContext().clone(m_initializer),
+            GetNodeContext().clone(m_condition),
+            GetNodeContext().clone(m_continuing),
+            GetNodeContext().clone(m_block)
+        );
+    }
+
+    CtxRef<ExprStat>& ForStat::initializer()
+    {
+        return m_initializer;
+    }
+
+    CtxRef<Expr>& ForStat::condition()
+    {
+        return m_condition;
+    }
+
+    CtxRef<ExprStat>& ForStat::continuing()
+    {
+        return m_continuing;
+    }
+
+    CtxRef<BlockStat>& ForStat::block()
+    {
+        return m_block;
+    }
+
+    WhileStat::WhileStat(CtxRef<Expr>&& condition, CtxRef<BlockStat>&& block)
+        : m_condition { std::move(condition) },
+            m_block { std::move(block) }
+    {
+    }
+
+    CtxRef<TreeNode> WhileStat::clone()
+    {
+        GetNodeContext().make<WhileStat>(
+            GetNodeContext().clone(m_condition),
+            GetNodeContext().clone(m_block)
+        );
+    }
+
+    CtxRef<Expr>& WhileStat::condition()
+    {
+        return m_condition;
+    }
+
     StructDecl::StructDecl(
         const std::string& name,
         std::vector<CtxRef<StructMember>>&& members,
@@ -157,13 +287,23 @@ namespace kate::sc::ast {
     }
 }
 
-TS_RTTI_TYPE(kate::sc::ast::TreeNode)
-TS_RTTI_TYPE(kate::sc::ast::Attr)
-TS_RTTI_TYPE(kate::sc::ast::Decl)
-TS_RTTI_TYPE(kate::sc::ast::Expr)
-TS_RTTI_TYPE(kate::sc::ast::FuncArg)
-TS_RTTI_TYPE(kate::sc::ast::FuncDecl)
-TS_RTTI_TYPE(kate::sc::ast::StructMember)
-TS_RTTI_TYPE(kate::sc::ast::StructDecl)
-TS_RTTI_TYPE(kate::sc::ast::Module)
-TS_RTTI_TYPE(kate::sc::ast::Type)
+using namespace kate::sc;
+
+TS_RTTI_TYPE(ast::TreeNode)
+TS_RTTI_TYPE(ast::Attr)
+TS_RTTI_TYPE(ast::Decl)
+TS_RTTI_TYPE(ast::Expr)
+TS_RTTI_TYPE(ast::FuncArg)
+TS_RTTI_TYPE(ast::FuncDecl)
+TS_RTTI_TYPE(ast::StructMember)
+TS_RTTI_TYPE(ast::StructDecl)
+
+TS_RTTI_TYPE(ast::Stat)
+TS_RTTI_TYPE(ast::IfStat)
+TS_RTTI_TYPE(ast::ForStat)
+TS_RTTI_TYPE(ast::WhileStat)
+TS_RTTI_TYPE(ast::BlockStat)
+TS_RTTI_TYPE(ast::ExprStat)
+
+TS_RTTI_TYPE(ast::Module)
+TS_RTTI_TYPE(ast::Type)
