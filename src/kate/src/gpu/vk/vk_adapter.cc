@@ -70,11 +70,11 @@ namespace kate::gpu {
     VkAdapterObject::VkAdapterObject()
     {
         vk::ApplicationInfo appinfo = vk::ApplicationInfo(
-            "",                             // Application name
-            VK_MAKE_VERSION(1, 0, 0),       // Application version
-            "kate",                         // Engine name
-            VK_MAKE_VERSION(0, 1, 0),       // Engine version
-            VK_MAKE_API_VERSION(1, 0, 0, 0)  // Vulkan API version
+            "",                                 // Application name
+            VK_MAKE_VERSION(1, 0, 0),           // Application version
+            "kate",                             // Engine name
+            VK_MAKE_VERSION(0, 1, 0),           // Engine version
+            VK_MAKE_API_VERSION(1, 0, 0, 0)     // Vulkan API version
         );
 
         m_instance = vk::createInstance(

@@ -327,17 +327,102 @@ namespace kate::sc::ast {
         std::vector<CtxRef<Attr>> m_attrs;
     };
 
+    class Stat : public base::rtti::Castable<Stat, TreeNode> {};
+
+    class BlockStat final : public base::rtti::Castable<BlockStat, Stat> {
+    public:
+        BlockStat(std::vector<CtxRef<Stat>>&& stats);
+
+        CtxRef<TreeNode> clone() override;
+
+        std::vector<CtxRef<Stat>>& stats();
+    private:
+        std::vector<CtxRef<Stat>> m_stats;
+    };
+
+    class ExprStat final : public base::rtti::Castable<ExprStat, Stat> {
+    public:
+        ExprStat(CtxRef<Expr>&& expr);
+
+        CtxRef<TreeNode> clone() override;
+
+        CtxRef<Expr>& expr();
+    private:
+        CtxRef<ExprStat> m_expr;
+    };
+
+    class IfStat final : public base::rtti::Castable<IfStat, Stat> {
+    public:
+        IfStat(
+            CtxRef<Expr>&& condition,
+            CtxRef<BlockStat>&& block,
+            CtxRef<BlockStat>&& elseBlock
+        );
+
+        CtxRef<TreeNode> clone() override;
+
+        CtxRef<Expr>& condition();
+
+        CtxRef<BlockStat>& block();
+
+        CtxRef<BlockStat>& elseBlock();
+    private:
+        CtxRef<Expr> m_condition;
+        CtxRef<BlockStat> m_block;
+        CtxRef<BlockStat> m_elseBlock;
+    };
+
+    class ForStat final : public base::rtti::Castable<ForStat, Stat> {
+    public:
+        ForStat(
+            CtxRef<ExprStat>&& initializer,
+            CtxRef<Expr>&& condition,
+            CtxRef<ExprStat>&& continuing,
+            CtxRef<BlockStat>&& block
+        );
+
+        CtxRef<TreeNode> clone() override;
+
+        CtxRef<ExprStat>& initializer();
+
+        CtxRef<Expr>& condition();
+
+        CtxRef<ExprStat>& continuing();
+
+        CtxRef<BlockStat>& block();
+    private:
+        CtxRef<ExprStat> m_initializer;
+        CtxRef<Expr> m_condition;
+        CtxRef<ExprStat> m_continuing;
+        CtxRef<BlockStat> m_block;
+    };
+
+    class WhileStat final : public base::rtti::Castable<WhileStat, Stat> {
+    public:
+        WhileStat(CtxRef<Expr>&& condition);
+
+        CtxRef<TreeNode> clone() override;
+
+        CtxRef<Expr>& condition();
+    private:
+        CtxRef<Expr> m_condition;
+    };
+
     class StructDecl final : public base::rtti::Castable<StructDecl, Decl> {
     public:
         StructDecl(
             const std::string& name,
-            std::vector<CtxRef<StructMember>>&& members
+            std::vector<CtxRef<StructMember>>&& members,
+            std::vector<CtxRef<Attr>>&& attrs = {}
         );
 
         CtxRef<TreeNode> clone() override;
 
         std::vector<CtxRef<StructMember>>& members();
+
+        std::vector<CtxRef<Attr>>& attrs();
     private:
         std::vector<CtxRef<StructMember>> m_members;
+        std::vector<CtxRef<Attr>> m_attrs;
     };
 }

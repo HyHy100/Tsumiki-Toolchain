@@ -129,8 +129,10 @@ namespace kate::sc::ast {
 
     StructDecl::StructDecl(
         const std::string& name,
-        std::vector<CtxRef<StructMember>>&& members
-    ) : m_members { std::move(members) }
+        std::vector<CtxRef<StructMember>>&& members,
+        std::vector<CtxRef<Attr>>&& attrs
+    ) : m_members { std::move(members) },
+        m_attrs { std::move(attrs) }
     {
         m_name = name;
     }
@@ -139,13 +141,19 @@ namespace kate::sc::ast {
     {
         return GetNodeContext().make<StructDecl>(
             m_name,
-            GetNodeContext().clone(m_members)
+            GetNodeContext().clone(m_members),
+            GetNodeContext().clone(m_attrs)
         );
     }
 
     std::vector<CtxRef<StructMember>>& StructDecl::members()
     {
         return m_members;
+    }
+
+    std::vector<CtxRef<Attr>>& StructDecl::attrs()
+    {
+        return m_attrs;
     }
 }
 
