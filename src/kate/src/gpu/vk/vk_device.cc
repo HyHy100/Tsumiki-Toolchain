@@ -12,7 +12,11 @@ namespace kate::gpu {
         std::shared_ptr<VkAdapterObject> adapter
     ) : m_adapter { adapter }
     {
-        auto& vk_instance = adapter->getInstance();
+    }
+
+    void VkDeviceObject::initialize()
+    {
+        auto& vk_instance = m_adapter->getInstance();
 
         auto physical_devices = vk_instance.enumeratePhysicalDevices();
 

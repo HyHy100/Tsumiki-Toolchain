@@ -16,11 +16,8 @@ target_link_libraries(kate base vulkan SDL3-static)
 target_sources(
     kate 
     PRIVATE 
-    src/gpu/adapter.cc
-    src/gpu/device.cc
     src/gpu/extent.cc
     src/gpu/queue.cc
-
     src/gpu/memory.cc
 
     src/gpu/vk/vk_adapter.cc

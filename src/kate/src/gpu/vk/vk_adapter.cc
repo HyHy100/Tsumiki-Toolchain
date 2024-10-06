@@ -13,8 +13,8 @@ namespace kate::gpu {
         const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, 
         void* pUserData
     ) {
-        if (!(messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT))
-        std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
+        if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+            std::cerr << "(Vulkan) (VL Error): " << pCallbackData->pMessage << std::endl;
 
         return VK_FALSE;
     }
@@ -90,7 +90,11 @@ namespace kate::gpu {
 
     std::shared_ptr<Device> VkAdapterObject::createDevice()
     {
-        return std::make_shared<VkDeviceObject>(shared_from_this());
+        auto device = std::make_shared<VkDeviceObject>(shared_from_this());
+
+        device->initialize();
+
+        return device;
     }
 
     vk::Instance& VkAdapterObject::getInstance()

@@ -76,8 +76,6 @@ namespace kate::gpu {
 
     class Device {
     public:
-        Device();
-
         virtual ~Device() = default;
 
         virtual std::shared_ptr<Texture> createTexture(

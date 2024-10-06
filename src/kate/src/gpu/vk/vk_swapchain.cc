@@ -164,6 +164,8 @@ namespace kate::gpu {
 
         m_swapchainImages = m_device->getDevice().getSwapchainImagesKHR(m_swapchain);
 
+        m_swapchainImageViews.resize(m_swapchainImages.size());
+
         for (size_t i = 0; i < m_swapchainImages.size(); i++) {
             m_swapchainImageViews[i] = m_device->getDevice().createImageView(
                 vk::ImageViewCreateInfo(

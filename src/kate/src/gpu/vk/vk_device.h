@@ -16,6 +16,8 @@ namespace kate::gpu {
     public:
         VkDeviceObject(std::shared_ptr<VkAdapterObject> adapter);
 
+        void initialize();
+
         vk::Device& getDevice();
 
         vk::PhysicalDevice& getPhysicalDevice();
