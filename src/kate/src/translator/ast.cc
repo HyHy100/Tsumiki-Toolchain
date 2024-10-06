@@ -16,6 +16,67 @@ namespace kate::sc::ast {
         return m_globalDecls;
     }
 
+    BinaryExpr::BinaryExpr(
+        BinaryExpr::Type type,
+        CtxRef<Expr>&& lhs,
+        CtxRef<Expr>&& rhs
+    ) : m_type { type },
+        m_lhs { std::move(lhs) },
+        m_rhs { std::move(rhs) }
+    {
+    }
+
+    CtxRef<TreeNode> BinaryExpr::clone()
+    {
+        return GetNodeContext().make<BinaryExpr>(
+            m_type,
+            GetNodeContext().clone(m_lhs),
+            GetNodeContext().clone(m_rhs)
+        );
+    }
+
+    void BinaryExpr::setLhs(CtxRef<Expr>&& lhs)
+    {
+        m_lhs = std::move(lhs);
+    }
+
+    void BinaryExpr::setRhs(CtxRef<Expr>&& rhs)
+    {
+        m_rhs = std::move(rhs);
+    }
+
+    BinaryExpr::Type BinaryExpr::type() const
+    {
+        return m_type;
+    }
+
+    CtxRef<Expr>& BinaryExpr::lhs()
+    {
+        return m_lhs;
+    }
+
+    CtxRef<Expr>& BinaryExpr::rhs()
+    {
+        return m_rhs;
+    }
+
+    ReturnStat::ReturnStat(CtxRef<Expr>&& expr)
+        : m_expr { std::move(expr) }
+    {
+    }
+
+    CtxRef<TreeNode> ReturnStat::clone()
+    {
+        return GetNodeContext().make<ReturnStat>(
+            GetNodeContext().clone(m_expr)
+        );
+    }
+
+    CtxRef<Expr>& ReturnStat::expr()
+    {
+        return m_expr;
+    }
+
     Attr::Attr(Attr::Type type, std::vector<CtxRef<Expr>>&& args)
         : m_type { type },
             m_args { std::move(args) }
@@ -246,7 +307,7 @@ namespace kate::sc::ast {
 
     CtxRef<TreeNode> WhileStat::clone()
     {
-        GetNodeContext().make<WhileStat>(
+        return GetNodeContext().make<WhileStat>(
             GetNodeContext().clone(m_condition),
             GetNodeContext().clone(m_block)
         );
@@ -255,6 +316,11 @@ namespace kate::sc::ast {
     CtxRef<Expr>& WhileStat::condition()
     {
         return m_condition;
+    }
+
+    CtxRef<TreeNode> BreakStat::clone()
+    {
+        return GetNodeContext().make<BreakStat>();
     }
 
     StructDecl::StructDecl(
@@ -292,7 +358,10 @@ using namespace kate::sc;
 TS_RTTI_TYPE(ast::TreeNode)
 TS_RTTI_TYPE(ast::Attr)
 TS_RTTI_TYPE(ast::Decl)
+
 TS_RTTI_TYPE(ast::Expr)
+TS_RTTI_TYPE(ast::BinaryExpr)
+
 TS_RTTI_TYPE(ast::FuncArg)
 TS_RTTI_TYPE(ast::FuncDecl)
 TS_RTTI_TYPE(ast::StructMember)
@@ -304,6 +373,8 @@ TS_RTTI_TYPE(ast::ForStat)
 TS_RTTI_TYPE(ast::WhileStat)
 TS_RTTI_TYPE(ast::BlockStat)
 TS_RTTI_TYPE(ast::ExprStat)
+TS_RTTI_TYPE(ast::ReturnStat)
+TS_RTTI_TYPE(ast::BreakStat)
 
 TS_RTTI_TYPE(ast::Module)
 TS_RTTI_TYPE(ast::Type)

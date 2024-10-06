@@ -246,6 +246,53 @@ namespace kate::sc::ast {
 
     class Expr : public base::rtti::Castable<Expr, TreeNode> {};
 
+    class BinaryExpr final : public base::rtti::Castable<BinaryExpr, Expr> {
+    public:
+        enum class Type {
+            kAdd,
+            KSub,
+            kDiv,
+            kMul,
+            kMod,
+            kMemberAccess,
+            kSwizzle,
+
+            kCompoundAdd,
+            kCompoundSub,
+            kCompoundDiv,
+            kCompoundMul,
+            kCompoundMod,
+
+            kIndexAccessor,
+            kComma,
+
+            kCount
+        };
+
+        BinaryExpr(
+            Type type, 
+            CtxRef<Expr>&& lhs, 
+            CtxRef<Expr>&& rhs
+        );
+
+        CtxRef<TreeNode> clone() override;
+
+        void setLhs(CtxRef<Expr>&& lhs);
+
+        void setRhs(CtxRef<Expr>&& rhs);
+
+        Type type() const;
+
+        CtxRef<Expr>& lhs();
+
+        CtxRef<Expr>& rhs();
+    private:
+        CtxRef<Expr> m_lhs;
+        CtxRef<Expr> m_rhs;
+
+        Type m_type;
+    };
+
     class Attr final : public base::rtti::Castable<Attr, TreeNode> {
     public:
         enum class Type {
@@ -349,6 +396,26 @@ namespace kate::sc::ast {
         CtxRef<Expr>& expr();
     private:
         CtxRef<Expr> m_expr;
+    };
+
+    class ReturnStat final : public base::rtti::Castable<ReturnStat, Stat> {
+    public:
+        ReturnStat(CtxRef<Expr>&& expr);
+
+        CtxRef<TreeNode> clone() override;
+
+        CtxRef<Expr>& expr();
+    private:
+        CtxRef<Expr> m_expr;
+    };
+
+    class BreakStat final : public base::rtti::Castable<BreakStat, Stat> {
+    public:
+        BreakStat() = default;
+
+        ~BreakStat() = default;
+
+        CtxRef<TreeNode> clone() override;
     };
 
     class IfStat final : public base::rtti::Castable<IfStat, Stat> {

@@ -145,7 +145,11 @@ namespace kate::gpu {
         vk::SwapchainCreateInfoKHR swapchain_ci( 
             vk::SwapchainCreateFlagsKHR {},
             m_surface,
-            std::clamp( 3u, surface_capabilities.minImageCount, surface_capabilities.maxImageCount ),
+            std::clamp(
+                3u, 
+                surface_capabilities.minImageCount, 
+                surface_capabilities.maxImageCount
+            ),
             vk::Format::eB8G8R8A8Unorm,
             vk::ColorSpaceKHR::eSrgbNonlinear,
             swapchainExtent,
