@@ -49,7 +49,7 @@ namespace kate::sc {
             kRBracket,  // ]
 
             kLBrace,    // {
-            kRBrace,    // }            
+            kRBrace,    // }
 
             kComma,     // ,
             kDot,       // .

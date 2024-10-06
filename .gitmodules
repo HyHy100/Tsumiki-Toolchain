@@ -28,3 +28,6 @@
 [submodule "src/third_party/SDL"]
 	path = src/third_party/SDL
 	url = https://github.com/libsdl-org/SDL
+[submodule "src/third_party/fmt"]
+	path = src/third_party/fmt
+	url = https://github.com/fmtlib/fmt

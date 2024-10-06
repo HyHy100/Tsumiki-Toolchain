@@ -1,5 +1,13 @@
 add_library(base)
 
-target_sources(base PRIVATE todo.cc)
+target_sources(
+    base
+    PRIVATE
+    rtti.cc
+)
 
-target_include_directories(base PUBLIC ${CMAKE_CURRENT_LIST_DIR})
+target_include_directories(
+    base
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}
+)

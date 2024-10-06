@@ -7,6 +7,7 @@ include_directories(${CMAKE_SOURCE_DIR})
 
 set(SDL_STATIC ON)
 add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/SDL)
+add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/fmt)
 
 add_subdirectory(base)
 add_subdirectory(kate)

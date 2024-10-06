@@ -1,4 +1,7 @@
 #include "lexer.h"
+
+#include "base/numeric.h"
+
 #include <cstdio>
 #include <charconv>
 #include <stdexcept>
@@ -40,6 +43,18 @@ namespace kate::sc {
         size_t offset = 0;
 
         SourceLocation loc;
+
+        auto advance = [&] {
+            auto tok = source.at(offset++);
+
+            if (tok == '\n') {
+                loc.line++;
+                loc.column = 0;
+            } else 
+                loc.column++;
+
+            return tok;
+        };
         
         auto can_peek = [&](size_t off) {
             return offset + off < source.size();
@@ -61,18 +76,6 @@ namespace kate::sc {
             auto c = peek(offset);
 
             return (c >= '0' && c <= '9') || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
-        };
-
-        auto advance = [&] {
-            auto tok = source.at(offset++);
-
-            if (tok == '\n') {
-                loc.line++;
-                loc.column = 0;
-            } else 
-                loc.column++;
-
-            return tok;
         };
 
         auto is_ident = [](char c) {
@@ -169,7 +172,7 @@ namespace kate::sc {
                         if (matches(0, 'f')) {
                             advance();
 
-                            if (std::in_range<float>(dvalue))
+                            if (base::in_range<float>(dvalue))
                                 m_tokens.push_back({
                                     Token::Type::kFloat,
                                     dvalue,
@@ -218,7 +221,7 @@ namespace kate::sc {
                     } else if (matches(0, 's')) {
                         advance();
 
-                        if (std::in_range<uint16_t>(value)) {
+                        if (base::in_range<uint16_t>(value)) {
                             m_tokens.push_back({
                                 Token::Type::kInteger,
                                 static_cast<int64_t>(value),
@@ -226,7 +229,7 @@ namespace kate::sc {
                             });
                         } else show_error_and_die("Value overflows u16 limits.");
                     } else {
-                        if (std::in_range<uint32_t>(value)) {
+                        if (base::in_range<uint32_t>(value)) {
                             m_tokens.push_back({
                                 Token::Type::kInteger,
                                 static_cast<int64_t>(value),
@@ -237,7 +240,7 @@ namespace kate::sc {
                 } else if (matches(0, 'l')) {
                     advance();
 
-                    if (std::in_range<int64_t>(value)) {
+                    if (base::in_range<int64_t>(value)) {
                         m_tokens.push_back({
                             Token::Type::kInteger,
                             static_cast<int64_t>(value),
@@ -248,7 +251,7 @@ namespace kate::sc {
                 } else if (matches(0, 's')) {
                     advance();
 
-                    if (std::in_range<int16_t>(value)) {
+                    if (base::in_range<int16_t>(value)) {
                         m_tokens.push_back({
                             Token::Type::kInteger,
                             static_cast<int64_t>(value),
@@ -256,7 +259,7 @@ namespace kate::sc {
                         });
                     } else show_error_and_die("Value overflows u32 limits.");
                 } else {
-                    if (std::in_range<int32_t>(value)) {
+                    if (base::in_range<int32_t>(value)) {
                         m_tokens.push_back(Token {
                             Token::Type::kInteger,
                             static_cast<int64_t>(value),
@@ -491,7 +494,7 @@ namespace kate::sc {
                         });
                     }
 
-                    advance(); // discard \r
+                    advance();
                     
                     break;
                 }
@@ -579,6 +582,14 @@ namespace kate::sc {
                 loc
             });
         }
+
+        for (auto& tok : m_tokens) {
+            std::visit([](auto& v) {
+                std::cerr << v << " ";
+            }, tok.value());
+        }
+
+        std::cerr << std::endl;
     }
 
     const std::vector<Token>& Lexer::tokens()

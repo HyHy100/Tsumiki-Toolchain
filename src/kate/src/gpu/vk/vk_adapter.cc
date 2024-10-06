@@ -2,35 +2,36 @@
 #include "vk_device.h"
 #include "vk_config.h"
 
-#include <iostream>
+#include <fmt/format.h>
 
 namespace kate::gpu {
     VkDebugUtilsMessengerEXT debugMessenger;
 
     static VKAPI_ATTR VkBool32 VKAPI_CALL debugCallback(
-        VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
-        VkDebugUtilsMessageTypeFlagsEXT messageType, 
-        const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, 
+        vk::DebugUtilsMessageSeverityFlagBitsEXT messageSeverity, 
+        vk::DebugUtilsMessageTypeFlagsEXT messageType, 
+        const vk::DebugUtilsMessengerCallbackDataEXT* pCallbackData, 
         void* pUserData
     ) {
-        if (messageSeverity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
-            std::cerr << "(Vulkan) (VL Error): " << pCallbackData->pMessage << std::endl;
+        if (messageSeverity & vk::DebugUtilsMessageSeverityFlagBitsEXT::eError)
+            fmt::println("『Vulkan』: ERROR: {}", pCallbackData->pMessage);
 
         return VK_FALSE;
     }
 
     void populateDebugMessengerCreateInfo(
-        VkDebugUtilsMessengerCreateInfoEXT& createInfo
+        vk::DebugUtilsMessengerCreateInfoEXT& createInfo
     ) {
-        createInfo = {};
-        createInfo.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
-        createInfo.messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT 
-                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT 
-                                    | VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
-        createInfo.messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT 
-                                | VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT 
-                                | VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
-        createInfo.pfnUserCallback = debugCallback;
+        createInfo = vk::DebugUtilsMessengerCreateInfoEXT(
+            {},
+            vk::DebugUtilsMessageSeverityFlagBitsEXT::eVerbose 
+            | vk::DebugUtilsMessageSeverityFlagBitsEXT::eWarning 
+            | vk::DebugUtilsMessageSeverityFlagBitsEXT::eError,
+            vk::DebugUtilsMessageTypeFlagBitsEXT::eGeneral 
+            | vk::DebugUtilsMessageTypeFlagBitsEXT::eValidation 
+            | vk::DebugUtilsMessageTypeFlagBitsEXT::ePerformance,
+            reinterpret_cast<PFN_vkDebugUtilsMessengerCallbackEXT>(debugCallback)
+        );
     }
 
     VkResult CreateDebugUtilsMessengerEXT(
@@ -53,14 +54,14 @@ namespace kate::gpu {
 
     void setupDebugMessenger(vk::Instance& instance) {
 #       ifndef NDEBUG
-        VkDebugUtilsMessengerCreateInfoEXT createInfo;
+        vk::DebugUtilsMessengerCreateInfoEXT createInfo;
         populateDebugMessengerCreateInfo(createInfo);
 
         if (CreateDebugUtilsMessengerEXT(
                 instance, 
-                &createInfo, 
-                nullptr, 
-                &debugMessenger
+                reinterpret_cast<VkDebugUtilsMessengerCreateInfoEXT*>(&createInfo), 
+                nullptr,
+                reinterpret_cast<VkDebugUtilsMessengerEXT*>(&debugMessenger)
             ) != VK_SUCCESS) 
             throw std::runtime_error("failed to set up debug messenger!");
 #       endif

@@ -1,26 +1,28 @@
-struct Input {
-    @binding(0) m: vec4f,   // binding(0)
-    m2: vec4f,              // binding(1)
-    @binding(4) m3: vec3u,  // binding(4)
-    m4: vec3u               // binding(5)
-}
-
 @group(0) @binding(0) 
-buffer_ro<float> buffer1; // read only buffer
+buffer_ro buffer1: f32;
 
 @group(0) @binding(1)
-buffer_ro<fvec3> buffer2; // read only buffer
+buffer_ro buffer2: fvec3;
 
-@group(1)
-buffer_wo<Input> buffer3; // write only buffer
+@group(1) @binding(0)
+buffer_wo buffer3: []{
+    m0: vec4f,
+    m1: vec4f,
+    m2: vec3u,
+    m3: vec3u
+};
 
-# the '@compute' here means a compute shader entry point.
+@group(1) @binding(1)
+buffer_wo buffer4: []{
+    m0: vec4f,
+    m1: vec4f
+};
+
+// the '@compute' here means a compute shader entry point.
 @compute @workgroup_size(1, 1, 1)
-void main(
+fn main(
     @builtin local_invocation_id: uvec3,
-    @builtin local_invocation_index: uint,
-    @builtin global_invocation_id: uint
-)
-{
-    buffer3.m3 = local_invocation_id.xxx * 2u;
+    @builtin local_invocation_index: u32,
+    @builtin global_invocation_id: uvec3
+) {
 }

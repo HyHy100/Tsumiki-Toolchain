@@ -1,8 +1,11 @@
 add_library(kate)
 
-target_include_directories(kate PUBLIC include)
-
-target_include_directories(kate PRIVATE include/kate)
+target_include_directories(
+    kate
+    PUBLIC
+    ${CMAKE_CURRENT_LIST_DIR}/include
+    ${CMAKE_CURRENT_LIST_DIR}/include/kate
+)
 
 add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/khronos/vulkan-hpp khronos/vulkan-hpp)
 add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/khronos/spirv-headers khronos/spirv-headers)
@@ -11,7 +14,9 @@ add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/khronos/vulkan-utility-binaries
 add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/khronos/spirv-tools khronos/spirv-tools)
 add_subdirectory(${CMAKE_SOURCE_DIR}/third_party/khronos/vulkan-validation-layers khronos/vulkan-validation-layers)
 
-target_link_libraries(kate base vulkan SDL3-static)
+add_subdirectory(${CMAKE_CURRENT_LIST_DIR}/src/translator)
+
+target_link_libraries(kate base vulkan SDL3-static fmt)
 
 target_sources(
     kate 
