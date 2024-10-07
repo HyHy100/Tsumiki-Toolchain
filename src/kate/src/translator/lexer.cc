@@ -8,7 +8,7 @@
 #include <iostream>
 #include <utility>
 
-namespace kate::sc {
+namespace kate::tlr {
   Token::Token(
     Token::Type type,
     const value_t& value,

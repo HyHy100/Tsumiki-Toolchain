@@ -10,7 +10,7 @@
 
 #include "base/rtti.h"
 
-namespace kate::sc::ast {
+namespace kate::tlr::ast {
   template<typename T>
   class CRef {
   public:

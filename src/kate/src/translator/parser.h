@@ -5,7 +5,7 @@
 #include "lexer.h"
 #include "ast.h"
 
-namespace kate::sc {
+namespace kate::tlr {
     enum class Failure {
         kNoMatch,
         kError

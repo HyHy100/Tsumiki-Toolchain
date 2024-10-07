@@ -1,6 +1,6 @@
 #include "ast.h"
 
-namespace kate::sc::ast {
+namespace kate::tlr::ast {
   const std::string& Decl::name() const
   {
     return m_name;
@@ -434,7 +434,7 @@ namespace kate::sc::ast {
   }
 }
 
-using namespace kate::sc;
+using namespace kate::tlr;
 
 TS_RTTI_TYPE(ast::TreeNode)
 TS_RTTI_TYPE(ast::Attr)

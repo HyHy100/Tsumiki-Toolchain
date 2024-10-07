@@ -3,14 +3,14 @@
 
 #include <iostream>
 
-namespace kate::sc {
+namespace kate::tlr {
   int start(int argc, char* argv[]) {
     if (argc == 1) {
       std::cerr << "Missing shader source file." << std::endl;
       return 1;
     }
 
-    sc::Lexer lexer;
+    tlr::Lexer lexer;
     lexer.tokenize(argv[1]);
 
     return 0;
@@ -18,5 +18,5 @@ namespace kate::sc {
 }
 
 int main(int argc, char* argv[]) {
-  return kate::sc::start(argc, argv);
+  return kate::tlr::start(argc, argv);
 }

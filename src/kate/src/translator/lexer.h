@@ -4,7 +4,7 @@
 #include <vector>
 #include <variant>
 
-namespace kate::sc {
+namespace kate::tlr {
   struct SourceLocation {
     size_t line = 0;
     size_t column = 0;   

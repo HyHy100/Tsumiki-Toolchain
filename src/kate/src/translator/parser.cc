@@ -1,6 +1,6 @@
 #include "parser.h"
 
-namespace kate::sc {
+namespace kate::tlr {
   Parser::Parser(
     const ParserOptions& options
   ) : m_options { options },
