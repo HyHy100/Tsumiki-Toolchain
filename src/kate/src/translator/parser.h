@@ -1,6 +1,9 @@
 #pragma once
 
+#include <optional>
+
 #include "lexer.h"
+#include "ast.h"
 
 namespace kate::sc {
     enum class Failure {
@@ -17,7 +20,7 @@ namespace kate::sc {
 
         Result();
         
-        Result(T ptr);
+        Result(T&& ptr);
 
         Result(bool _erroed, bool _matched);
 
@@ -34,12 +37,38 @@ namespace kate::sc {
         T value;
     };
 
+    struct ParserOptions {
+        std::function<void(const std::string_view& error)> error_callback; 
+    };
+
     class Parser {
     public:
-        Parser() = default;
+        Parser(const ParserOptions& options);
 
-        void parse(const std::string_view& source);
+        ast::CRef<ast::Module> parse(const std::string_view& source);
     private:
+        bool should_continue();
+
+        const Token* current();
+
+        const Token* matches(Token::Type type);
+
+        const Token* matches(std::string_view identifier);
+
+        void sync_to(Token::Type tok);
+
+        Result<ast::CRef<ast::Decl>> parse_global_declaration();
+
+        Result<ast::CRef<ast::FuncDecl>> parse_func_decl();
+
+        Result<ast::CRef<ast::Type>> expect_type();
+
+        Failure error(const std::string_view& message);
+
+        ParserOptions m_options;
+
         Lexer m_lexer;
+
+        int64_t offset;
     };
 }

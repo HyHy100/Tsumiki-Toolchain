@@ -7,22 +7,22 @@
 #include <vector>
 
 namespace kate::gpu {
-    struct PlatformHandle {
-        void* nwd;
-        void* ndt;
-    };
+  struct PlatformHandle {
+    void* nwd;
+    void* ndt;
+  };
 
-    enum class SwapchainFlagsBits {
-        kNone,
-        kVSync
-    };
+  enum class SwapchainFlagsBits {
+    kNone,
+    kVSync
+  };
 
-    using SwapchainFlags = base::Flags<SwapchainFlagsBits>;
+  using SwapchainFlags = base::Flags<SwapchainFlagsBits>;
 
-    class Swapchain {
-    public:
-        virtual ~Swapchain() = default;
-    private:
-        std::vector<Texture> m_textures;
-    };
+  class Swapchain {
+  public:
+    virtual ~Swapchain() = default;
+  private:
+    std::vector<Texture> m_textures;
+  };
 }

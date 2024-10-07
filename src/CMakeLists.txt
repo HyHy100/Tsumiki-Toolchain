@@ -15,10 +15,10 @@ add_subdirectory(kate)
 add_executable(tsumiki)
 
 set_target_properties(
-    tsumiki
-    PROPERTIES
-    CXX_STANDARD 20
-    CXX_STANDARD_REQUIRED ON
+  tsumiki
+  PROPERTIES
+  CXX_STANDARD 20
+  CXX_STANDARD_REQUIRED ON
 )
 
 target_link_libraries(tsumiki kate)

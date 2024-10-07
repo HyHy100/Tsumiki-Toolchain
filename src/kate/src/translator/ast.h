@@ -14,7 +14,10 @@ namespace kate::sc::ast {
     template<typename T>
     class CRef {
     public:
-        CRef();
+        CRef()
+        {
+          m_id = std::numeric_limits<decltype(m_id)>::max();
+        }
 
         CRef(uint64_t id) 
         {
@@ -23,23 +26,46 @@ namespace kate::sc::ast {
 
         CRef(const CRef<T>&) = delete;
 
-        CRef(CRef<T>&& rhs);
+        CRef(CRef<T>&& rhs)
+        {
+          m_id = rhs.m_id;
+          rhs.m_id = std::numeric_limits<decltype(m_id)>::max();
+        }
         
         template<typename U>
-        CRef(CRef<U>&& rhs);
+        CRef(CRef<U>&& rhs)
+        {
+          m_id = rhs.m_id;
+          rhs.m_id = std::numeric_limits<decltype(m_id)>::max();
+        }
 
-        void operator=(CRef<T>&& rhs);
+        void operator=(CRef<T>&& rhs)
+        {
+          m_id = rhs.m_id;
+          rhs.m_id = std::numeric_limits<decltype(m_id)>::max();
+        }
 
         void operator=(const CRef<T>&) = delete;
 
-        T* operator->();
+        T* operator->()
+        {
+          return get();
+        }
 
         template<typename U>
-        CRef<U> convertTo();
+        CRef<U> convertTo()
+        {
+          auto id = m_id;
+          m_id = std::numeric_limits<decltype(m_id)>::max();
+          return CRef<U>(id);
+        }
 
         T* get();
 
-        operator bool() const;
+        operator bool() const
+        {
+          return m_id != std::numeric_limits<decltype(m_id)>::max();
+        }
 
         uint64_t m_id;
     };
@@ -200,17 +226,15 @@ namespace kate::sc::ast {
 
     class Module : public base::rtti::Castable<Module, TreeNode> {
     public:
-        Module() = default;
-
-        ~Module() = default;
+        Module(
+            std::vector<CRef<Decl>>&& declaration_list
+        );
 
         CRef<TreeNode> clone() override;
 
-        void addGlobalDecl(CRef<Decl>&& decl);
-
-        std::vector<CRef<Decl>>& getGlobalDecls();
+        std::vector<CRef<Decl>>& global_declarations();
     private:
-        std::vector<CRef<Decl>> m_globalDecls;
+        std::vector<CRef<Decl>> m_global_declarations;
     };
 
     class Expr : public base::rtti::Castable<Expr, TreeNode> {};
@@ -280,17 +304,23 @@ namespace kate::sc::ast {
         std::vector<CRef<Expr>> m_args;
     };
 
+    class Type;
+
     class FuncArg final : public base::rtti::Castable<FuncArg, Decl> {
     public:
         FuncArg(
             const std::string& name,
-            std::vector<CRef<Attr>>&& attrs
+            CRef<Type>&& type,
+            std::vector<CRef<Attr>>&& attrs = {}
         );
 
         CRef<TreeNode> clone() override;
 
+        CRef<Type>& type();
+
         std::vector<CRef<Attr>>& attrs();
     private:
+        CRef<Type> m_type;
         std::vector<CRef<Attr>> m_attrs;
     };
 
@@ -298,6 +328,7 @@ namespace kate::sc::ast {
     public:
         FuncDecl(
             const std::string& name,
+            std::vector<CRef<FuncArg>>&& args = {},
             std::vector<CRef<Attr>>&& attributes = {}
         );
 
@@ -305,7 +336,9 @@ namespace kate::sc::ast {
 
         std::vector<CRef<Attr>>& attrs();
     private:
-        std::vector<CRef<Attr>>& m_attrs;
+        std::vector<CRef<FuncArg>> m_args;
+
+        std::vector<CRef<Attr>> m_attrs;
     };
 
     class VarDecl final : public base::rtti::Castable<VarDecl, Decl> {

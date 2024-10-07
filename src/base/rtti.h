@@ -28,8 +28,6 @@ namespace base {
     using raw_type_t = remove_all_const_t<std::remove_pointer_t<std::decay_t<T>>>;
 }
 
-// template <> const base::rtti::TypeMetadata InfoStructure<base::rtti::Base>::data;
-
 namespace base::rtti {
     struct TypeMetadata {
         const TypeMetadata* base;
