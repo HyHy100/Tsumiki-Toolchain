@@ -129,12 +129,17 @@ namespace kate::tlr {
 
     return Failure::kNoMatch;
   }
- 
-  Result<ast::CRef<ast::Expr>> Parser::parse_expr()
+
+  Result<ast::CRef<ast::Expr>> Parser::primary_expr()
   {
     if (auto lit = literal_expr(); lit.matched) return lit;
 
     return Failure::kNoMatch;
+  }
+ 
+  Result<ast::CRef<ast::Expr>> Parser::parse_expr()
+  {
+    return primary_expr(); 
   }
 
   Result<std::vector<ast::CRef<ast::Attr>>> Parser::parse_attributes()
@@ -181,6 +186,45 @@ namespace kate::tlr {
     }
 
     return attribute_list;
+  }
+
+  Result<ast::CRef<ast::BufferDecl>> Parser::parse_buffer_decl()
+  {
+    if (matches("buffer")) {
+      std::vector<ast::CRef<ast::Expr>> expr_list;
+
+      if (matches(Token::Type::kLT)) {
+        auto expr_list_result = parse_expression_list();
+
+        if (expr_list_result.errored) return Failure::kError;
+
+        if (!expr_list_result.matched)
+          return error("missing expression list between '<..>' while declaring buffer.");
+
+        if (!matches(Token::Type::kGT)) 
+          return error("missing '>' at end of buffer argument list.");
+      }
+
+      auto name = parse_name();
+
+      if (!name.matched) return error("missing name in buffer declaration.");
+
+      if (!matches(Token::Type::kColon)) return error("missing ':' after buffer name.");
+
+      auto type_ident = parse_name();
+
+      if (!type_ident.matched) return error("missing type in buffer declaration.");
+
+      if (!matches(Token::Type::kSemicolon)) return error("missing semicolon after buffer declaration.");
+
+      return ast::context().make<ast::BufferDecl>(
+        name.value,
+        std::move(expr_list),
+        ast::context().make<ast::Type>(type_ident.value)
+      );
+    }
+
+    return Failure::kNoMatch;
   }
 
   Result<ast::CRef<ast::FuncDecl>> Parser::parse_func_decl()

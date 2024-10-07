@@ -432,6 +432,30 @@ namespace kate::tlr::ast {
   {
     return m_attrs;
   }
+
+  BufferDecl::BufferDecl(
+    const std::string& name,
+    std::vector<CRef<Expr>>&& args,
+    CRef<Type>&& type
+  ) : m_args { std::move(args) },
+    m_type { std::move(type) }
+  {
+    m_name = name;
+  }
+
+  CRef<TreeNode> BufferDecl::clone()
+  {
+    return context().make<BufferDecl>(
+      m_name,
+      context().clone(m_args),
+      context().clone(m_type)
+    );
+  }
+
+  CRef<Type>& BufferDecl::type()
+  {
+    return m_type;
+  }
 }
 
 using namespace kate::tlr;
@@ -459,3 +483,4 @@ TS_RTTI_TYPE(ast::VarDecl)
 TS_RTTI_TYPE(ast::VarStat)
 TS_RTTI_TYPE(ast::Module)
 TS_RTTI_TYPE(ast::Type)
+TS_RTTI_TYPE(ast::BufferDecl)

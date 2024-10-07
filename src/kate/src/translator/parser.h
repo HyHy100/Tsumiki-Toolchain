@@ -66,6 +66,8 @@ namespace kate::tlr {
 
         Result<ast::CRef<ast::FuncDecl>> parse_func_decl();
 
+        Result<ast::CRef<ast::BufferDecl>> parse_buffer_decl();
+
         Result<ast::CRef<ast::Type>> expect_type();
 
         Result<ast::CRef<ast::Stat>> statement();
@@ -77,6 +79,8 @@ namespace kate::tlr {
         Result<std::vector<ast::CRef<ast::Expr>>> parse_expression_list();
 
         Result<ast::CRef<ast::Expr>> parse_expr();
+
+        Result<ast::CRef<ast::Expr>> primary_expr();
 
         Result<ast::CRef<ast::LitExpr>> literal_expr();
 

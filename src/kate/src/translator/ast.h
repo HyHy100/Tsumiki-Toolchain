@@ -589,4 +589,20 @@ namespace kate::tlr::ast {
     std::vector<CRef<StructMember>> m_members;
     std::vector<CRef<Attr>> m_attrs;
   };
+
+  class BufferDecl final : public base::rtti::Castable<BufferDecl, Decl> {
+  public:
+    BufferDecl(
+      const std::string& name,
+      std::vector<CRef<Expr>>&& args,
+      CRef<Type>&& type
+    );
+
+    CRef<TreeNode> clone() override;
+
+    CRef<Type>& type();
+  private:
+    std::vector<CRef<Expr>> m_args;
+    CRef<Type> m_type;
+  };
 }
