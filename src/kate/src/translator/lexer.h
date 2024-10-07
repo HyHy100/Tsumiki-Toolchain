@@ -13,8 +13,17 @@ namespace kate::sc {
   class Token {
   public:
     enum class Type {
-      kInteger,     // integers
-      kFloat,     // float
+      kInt16,
+      kUint16,
+
+      kInt32,     // integers
+      kInt64,
+
+      kUint32,
+      kUint64,
+
+      kFlt32,     // float
+      kFlt64,
 
       kColon,     // :
 
@@ -83,6 +92,11 @@ namespace kate::sc {
     const SourceLocation& location() const;
 
     const value_t& value() const;
+
+    template<typename T>
+    const T& value_as() const {
+      return std::get<T>(value());
+    }
 
     Type type() const;
 

@@ -179,7 +179,7 @@ namespace kate::sc {
 
               if (base::in_range<float>(dvalue))
                 m_tokens.push_back({
-                  Token::Type::kFloat,
+                  Token::Type::kFlt32,
                   dvalue,
                   loc
                 });
@@ -190,7 +190,7 @@ namespace kate::sc {
                 advance();
 
               m_tokens.push_back(Token {
-                Token::Type::kFloat,
+                Token::Type::kFlt64,
                 dvalue,
                 loc
               });
@@ -219,7 +219,7 @@ namespace kate::sc {
             advance();
 
             m_tokens.push_back({
-              Token::Type::kInteger,
+              Token::Type::kUint32,
               static_cast<int64_t>(value),
               loc
             });
@@ -228,7 +228,7 @@ namespace kate::sc {
 
             if (base::in_range<uint16_t>(value)) {
               m_tokens.push_back({
-                Token::Type::kInteger,
+                Token::Type::kUint16,
                 static_cast<int64_t>(value),
                 loc
               });
@@ -236,7 +236,7 @@ namespace kate::sc {
           } else {
             if (base::in_range<uint32_t>(value)) {
               m_tokens.push_back({
-                Token::Type::kInteger,
+                Token::Type::kUint32,
                 static_cast<int64_t>(value),
                 loc
               });
@@ -245,32 +245,33 @@ namespace kate::sc {
         } else if (matches(0, 'l')) {
           advance();
 
-          if (base::in_range<int64_t>(value)) {
+          if (base::in_range<int64_t>(value))
             m_tokens.push_back({
-              Token::Type::kInteger,
+              Token::Type::kInt64,
               static_cast<int64_t>(value),
               loc
             });
-          } else {            
-            show_error_and_die("Value overflows i64 limits."); }
+          else show_error_and_die("Value overflows i64 limits.");
         } else if (matches(0, 's')) {
           advance();
 
-          if (base::in_range<int16_t>(value)) {
+          if (base::in_range<int16_t>(value))
             m_tokens.push_back({
-              Token::Type::kInteger,
+              Token::Type::kInt16,
               static_cast<int64_t>(value),
               loc
             });
-          } else show_error_and_die("Value overflows u32 limits.");
+          else show_error_and_die("Value overflows i16 limits.");
         } else {
+          matches(0, 'i'); // optionally skip 'i'
+
           if (base::in_range<int32_t>(value)) {
             m_tokens.push_back(Token {
-              Token::Type::kInteger,
+              Token::Type::kInt32,
               static_cast<int64_t>(value),
               loc
             });
-          } else show_error_and_die("Value overflows u32 limits.");
+          } else show_error_and_die("Value overflows i32 limits.");
         }
 
         continue;

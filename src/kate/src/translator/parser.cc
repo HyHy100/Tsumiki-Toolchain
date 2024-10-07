@@ -37,12 +37,132 @@ namespace kate::sc {
     return {};
   }
 
+  Result<std::vector<ast::CRef<ast::Expr>>> Parser::parse_expression_list()
+  {
+    auto expr = parse_expr();
+
+    if (!expr.matched) return Failure::kNoMatch;
+
+    std::vector<ast::CRef<ast::Expr>> expr_list;
+    expr_list.push_back(std::move(expr.value));
+
+    do {
+      expr = parse_expr();
+
+      if (!expr.matched)
+        return error("missing a expression after ',' while parsing a expression list.");
+
+      expr_list.push_back(std::move(expr.value));
+    } while (matches(Token::Type::kComma));
+
+    return expr_list;
+  }
+
+  Result<ast::CRef<ast::LitExpr>> Parser::literal_expr()
+  {
+    if (auto tok = matches(Token::Type::kInt16))
+      return ast::context().make<ast::LitExpr>(
+        ast::LitExpr::Type::kI32,
+        tok->value_as<int64_t>()
+      );
+    else if (auto tok = matches(Token::Type::kInt32))
+      return ast::context().make<ast::LitExpr>(
+        ast::LitExpr::Type::kI32,
+        tok->value_as<int64_t>()
+      );
+    else if (auto tok = matches(Token::Type::kInt64))
+      return ast::context().make<ast::LitExpr>(
+        ast::LitExpr::Type::kI64,
+        tok->value_as<int64_t>()
+      );
+    else if (auto tok = matches(Token::Type::kUint16))
+      return ast::context().make<ast::LitExpr>(
+        ast::LitExpr::Type::kU32,
+        tok->value_as<uint64_t>()
+      );
+    else if (auto tok = matches(Token::Type::kUint32))
+      return ast::context().make<ast::LitExpr>(
+        ast::LitExpr::Type::kU32,
+        tok->value_as<uint64_t>()
+      );
+    else if (auto tok = matches(Token::Type::kUint64))
+      return ast::context().make<ast::LitExpr>(
+        ast::LitExpr::Type::kU64,
+        tok->value_as<uint64_t>()
+      );
+    else if (auto tok = matches(Token::Type::kFlt32))
+      return ast::context().make<ast::LitExpr>(
+        ast::LitExpr::Type::kF32,
+        tok->value_as<double>()
+      );
+    else if (auto tok = matches(Token::Type::kFlt64))
+      return ast::context().make<ast::LitExpr>(
+        ast::LitExpr::Type::kF64,
+        tok->value_as<double>()
+      );
+
+    return Failure::kNoMatch;
+  }
+ 
+  Result<ast::CRef<ast::Expr>> Parser::parse_expr()
+  {
+    if (auto lit = literal_expr(); lit.matched) return lit;
+
+    return Failure::kNoMatch;
+  }
+
+  Result<std::vector<ast::CRef<ast::Attr>>> Parser::parse_attributes()
+  {
+    // TODO (Renan): We need to implemenet a synchronization point here.
+    std::vector<ast::CRef<ast::Attr>> attribute_list;
+
+    while (matches(Token::Type::kAt)) {
+      auto ident = parse_name();
+
+      if (!ident.matched) return error("missing attribute identifier after '@'.");
+
+      auto type = ast::Attr::Type::kCount;
+
+      if (ident.value == "workgroup_size")
+        type = ast::Attr::Type::kWorkgroupSize;
+      else if (ident.value == "compute")
+        type = ast::Attr::Type::kCompute;
+      else if (ident.value == "vertex")
+        type = ast::Attr::Type::kVertex;
+      else if (ident.value == "fragment")
+        type = ast::Attr::Type::kFragment;
+      else if (ident.value == "group")
+        type = ast::Attr::Type::kGroup;
+      else if (ident.value == "binding")
+        type = ast::Attr::Type::kBinding;
+      
+      if (!matches(Token::Type::kLeftParen))
+        return error("missing '(' after attribute name.");
+
+      auto expr_list = parse_expression_list();
+
+      if (expr_list.errored) return Failure::kError;
+
+      if (!matches(Token::Type::kRightParen))
+        return error("missing ')' at end of attribute parameters.");
+
+      attribute_list.push_back(
+        ast::context().make<ast::Attr>(
+          type,
+          std::move(expr_list.value)
+        )
+      );
+    }
+
+    return attribute_list;
+  }
+
   Result<ast::CRef<ast::FuncDecl>> Parser::parse_func_decl()
   {
     if (matches("fn")) {
-      auto function_name = matches(Token::Type::kIdent);
+      auto function_name = parse_name();
 
-      if (!function_name)
+      if (!function_name.matched)
         return error("expected function name.");
 
       if (!matches(Token::Type::kLeftParen))
@@ -51,9 +171,9 @@ namespace kate::sc {
       std::vector<ast::CRef<ast::FuncArg>> function_args;
 
       while (should_continue() && !matches(Token::Type::kRightParen)) {
-        auto ident = matches(Token::Type::kIdent);
+        auto ident = parse_name();
 
-        if (!ident) return error("missing argument identifier.");
+        if (!ident.matched) return error("missing argument identifier.");
 
         if (!matches(Token::Type::kColon))
           return error("missing ':' after function argument name.");
@@ -65,7 +185,7 @@ namespace kate::sc {
         // (Renan): if we are here, then we have a valid argument.
         function_args.push_back(
           ast::context().make<ast::FuncArg>(
-            std::string(std::get<std::string_view>(ident->value())),
+            ident.value,
             std::move(type.value)
           )
         );
@@ -75,10 +195,18 @@ namespace kate::sc {
         return error("expected a ')' after function arguments.");
 
       return ast::context().make<ast::FuncDecl>(
-        std::string(std::get<std::string_view>(function_name->value())),
+        function_name.value,
         std::move(function_args)
       );
     }
+
+    return Failure::kNoMatch;
+  }
+
+  Result<std::string> Parser::parse_name()
+  {
+    if (auto tok = matches(Token::Type::kIdent)) 
+      return std::string(tok->value_as<std::string_view>());
 
     return Failure::kNoMatch;
   }
@@ -159,15 +287,6 @@ namespace kate::sc {
       errored = true;
       matched = false;
     }
-  }
-
-  template<typename T>
-  template<typename U>
-  Result<T>::Result(Result<U>&& rhs) 
-  {
-    value = std::move(rhs.value);
-    matched = rhs.matched;
-    errored = rhs.errored;
   }
 
   template<typename T>

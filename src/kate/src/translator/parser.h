@@ -16,7 +16,12 @@ namespace kate::sc {
         Result(Failure failure);
 
         template<typename U>
-        Result(Result<U>&& rhs);
+        Result(Result<U>&& rhs) 
+        {
+          value = std::move(rhs.value);
+          matched = rhs.matched;
+          errored = rhs.errored;
+        }
 
         Result();
         
@@ -62,6 +67,16 @@ namespace kate::sc {
         Result<ast::CRef<ast::FuncDecl>> parse_func_decl();
 
         Result<ast::CRef<ast::Type>> expect_type();
+
+        Result<std::vector<ast::CRef<ast::Attr>>> parse_attributes();
+
+        Result<std::vector<ast::CRef<ast::Expr>>> parse_expression_list();
+
+        Result<ast::CRef<ast::Expr>> parse_expr();
+
+        Result<ast::CRef<ast::LitExpr>> literal_expr();
+
+        Result<std::string> parse_name();
 
         Failure error(const std::string_view& message);
 

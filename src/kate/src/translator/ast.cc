@@ -23,6 +23,33 @@ namespace kate::sc::ast {
     return m_global_declarations;
   }
 
+  LitExpr::LitExpr(Type type, uint64_t value)
+    : m_type { type }, m_value { value }
+  {
+  }
+
+  ast::CRef<ast::TreeNode> LitExpr::clone()
+  {
+    return ast::context().make<ast::LitExpr>(m_type, m_value);
+  }
+
+  IdExpr::IdExpr(const std::string& ident) 
+    : m_ident { ident }
+  {
+  }
+
+  ast::CRef<ast::TreeNode> IdExpr::clone()
+  {
+    return ast::context().make<IdExpr>(
+      m_ident
+    );
+  }
+
+  const std::string& IdExpr::ident() const
+  {
+    return m_ident;
+  }
+
   BinaryExpr::BinaryExpr(
     BinaryExpr::Type type,
     CRef<Expr>&& lhs,
@@ -406,6 +433,8 @@ TS_RTTI_TYPE(ast::TreeNode)
 TS_RTTI_TYPE(ast::Attr)
 TS_RTTI_TYPE(ast::Decl)
 TS_RTTI_TYPE(ast::Expr)
+TS_RTTI_TYPE(ast::LitExpr)
+TS_RTTI_TYPE(ast::IdExpr)
 TS_RTTI_TYPE(ast::BinaryExpr)
 TS_RTTI_TYPE(ast::FuncArg)
 TS_RTTI_TYPE(ast::FuncDecl)

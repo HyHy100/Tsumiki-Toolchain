@@ -239,6 +239,69 @@ namespace kate::sc::ast {
 
   class Expr : public base::rtti::Castable<Expr, TreeNode> {};
 
+  class IdExpr : public base::rtti::Castable<IdExpr, Expr> {
+  public:
+    IdExpr(const std::string& ident);
+
+    ast::CRef<ast::TreeNode> clone() override;
+
+    const std::string& ident() const;
+  private:
+    std::string m_ident;
+  };
+
+  class LitExpr : public base::rtti::Castable<LitExpr, Expr> {
+  public:
+    enum class Type {
+      kI32,
+      kI64,
+      kU32,
+      kU64,
+      kF32,
+      kF64
+    };
+
+    template<typename T, typename V = std::decay_t<T>>
+    LitExpr(Type type, V value)
+    {
+      switch (type) {
+        case Type::kU32:
+          assert(std::is_same_v<V, uint32_t>);
+          m_value = value;
+          break;
+        case Type::kU64:
+          assert(std::is_same_v<V, uint64_t>);
+          m_value = value;
+          break;
+        case Type::kI32:
+          assert(std::is_same_v<V, int32_t>);
+          m_value = reinterpret_cast<uint32_t>(value);
+          break;
+        case Type::kI64:
+          assert(std::is_same_v<V, int64_t>);
+          m_value = reinterpret_cast<uint64_t>(value);
+          break;
+        case Type::kF32:
+          assert(std::is_same_v<V, float>);
+          m_value = reinterpret_cast<uint64_t>(value);
+          break;
+        case Type::kF64:
+          assert(std::is_same_v<V, double>);
+          m_value = reinterpret_cast<uint64_t>(value);
+          break;
+      }
+
+      m_type = type;
+    }
+
+    LitExpr(Type type, uint64_t value);
+
+    ast::CRef<ast::TreeNode> clone() override;
+  private:
+    Type m_type;
+    uint64_t m_value;
+  };
+
   class BinaryExpr final : public base::rtti::Castable<BinaryExpr, Expr> {
   public:
     enum class Type {
@@ -293,7 +356,9 @@ namespace kate::sc::ast {
       kBinding,
       kCompute,
       kVertex,
-      kFragment
+      kFragment,
+      kWorkgroupSize,
+      kCount
     };
 
     Attr(Type type, std::vector<CRef<Expr>>&& args = {});
