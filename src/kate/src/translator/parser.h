@@ -68,6 +68,10 @@ namespace kate::sc {
 
         Result<ast::CRef<ast::Type>> expect_type();
 
+        Result<ast::CRef<ast::Stat>> statement();
+
+        Result<ast::CRef<ast::BlockStat>> parse_block();
+
         Result<std::vector<ast::CRef<ast::Attr>>> parse_attributes();
 
         Result<std::vector<ast::CRef<ast::Expr>>> parse_expression_list();

@@ -389,10 +389,13 @@ namespace kate::sc::ast {
     std::vector<CRef<Attr>> m_attrs;
   };
 
+  class BlockStat;
+
   class FuncDecl final : public base::rtti::Castable<FuncDecl, Decl> {
   public:
     FuncDecl(
       const std::string& name,
+      CRef<BlockStat>&& block,
       std::vector<CRef<FuncArg>>&& args = {},
       std::vector<CRef<Attr>>&& attributes = {}
     );
@@ -400,10 +403,14 @@ namespace kate::sc::ast {
     CRef<TreeNode> clone() override;
 
     std::vector<CRef<Attr>>& attrs();
+
+    CRef<BlockStat>& block();
   private:
     std::vector<CRef<FuncArg>> m_args;
 
     std::vector<CRef<Attr>> m_attrs;
+
+    CRef<BlockStat> m_block;
   };
 
   class VarDecl final : public base::rtti::Castable<VarDecl, Decl> {

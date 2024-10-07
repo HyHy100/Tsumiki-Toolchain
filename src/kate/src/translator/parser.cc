@@ -37,6 +37,32 @@ namespace kate::sc {
     return {};
   }
 
+  Result<ast::CRef<ast::Stat>> Parser::statement()
+  {
+    return {};
+  }
+
+  Result<ast::CRef<ast::BlockStat>> Parser::parse_block()
+  {
+    std::vector<ast::CRef<ast::Stat>> statements;
+
+    if (matches(Token::Type::kLBrace)) {
+      while (should_continue() && !matches(Token::Type::kRBrace)) {
+        auto stat = statement();
+
+        if (stat.errored) return Failure::kError;
+
+        statements.push_back(std::move(stat.value));
+      }
+
+      if (!current()->is(Token::Type::kRBrace)) return error("missing '}' after end of statement block.");
+
+      return ast::context().make<ast::BlockStat>(std::move(statements));
+    }
+
+    return Failure::kNoMatch;
+  }
+
   Result<std::vector<ast::CRef<ast::Expr>>> Parser::parse_expression_list()
   {
     auto expr = parse_expr();
@@ -194,8 +220,15 @@ namespace kate::sc {
       if (!current()->is(Token::Type::kRightParen))
         return error("expected a ')' after function arguments.");
 
+      auto block = parse_block();
+
+      if (block.errored) return Failure::kError;
+
+      if (!block.matched) return error("missing block in function declaration.");
+
       return ast::context().make<ast::FuncDecl>(
         function_name.value,
+        std::move(block.value),
         std::move(function_args)
       );
     }

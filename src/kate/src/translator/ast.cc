@@ -156,6 +156,7 @@ namespace kate::sc::ast {
 
   FuncDecl::FuncDecl(
     const std::string& name,
+    CRef<BlockStat>&& block,
     std::vector<CRef<FuncArg>>&& args,
     std::vector<CRef<Attr>>&& attributes
   ) : m_attrs { std::move(attributes) },
@@ -164,10 +165,16 @@ namespace kate::sc::ast {
     m_name = name;
   }
 
+  CRef<BlockStat>& FuncDecl::block()
+  {
+    return m_block;
+  }
+
   CRef<TreeNode> FuncDecl::clone()
   {
     return context().make<FuncDecl>(
       m_name,
+      context().clone(m_block),
       context().clone(m_args),
       context().clone(m_attrs)
     );
