@@ -1,46 +1,95 @@
 #include "ast.h"
 
 namespace kate::sc::ast {
+    template<typename T>
+    CRef<T>::CRef()
+    {
+        m_id = std::numeric_limits<decltype(m_id)>::max();
+    }
+
+    template<typename T>
+    CRef<T>::CRef(CRef<T>&& rhs)
+    {
+        m_id = rhs.m_id;
+        rhs.m_id = std::numeric_limits<decltype(m_id)>::max();
+    }
+
+    template<typename T>
+    template<typename U>
+    CRef<T>::CRef(CRef<U>&& rhs)
+    {
+        m_id = rhs.m_id;
+        rhs.m_id = std::numeric_limits<decltype(m_id)>::max();
+    }
+
+    template<typename T>
+    void CRef<T>::operator=(CRef<T>&& rhs)
+    {
+        m_id = rhs.m_id;
+        rhs.m_id = std::numeric_limits<decltype(m_id)>::max();
+    }
+
+    template<typename T>
+    T* CRef<T>::operator->()
+    {
+        return get();
+    }
+
+    template<typename T>
+    template<typename U>
+    CRef<U> CRef<T>::convertTo()
+    {
+        auto id = m_id;
+        m_id = std::numeric_limits<decltype(m_id)>::max();
+        return CRef<U>(id);
+    }
+
+    template<typename T>
+    CRef<T>::operator bool() const
+    {
+        return m_id != std::numeric_limits<decltype(m_id)>::max();
+    }
+
     const std::string& Decl::name() const
     {
         return m_name;
     }
 
-    void Module::addGlobalDecl(CtxRef<Decl>&& decl)
+    void Module::addGlobalDecl(CRef<Decl>&& decl)
     {
         m_globalDecls.push_back(std::move(decl));
     }
 
-    std::vector<CtxRef<Decl>>& Module::getGlobalDecls()
+    std::vector<CRef<Decl>>& Module::getGlobalDecls()
     {
         return m_globalDecls;
     }
 
     BinaryExpr::BinaryExpr(
         BinaryExpr::Type type,
-        CtxRef<Expr>&& lhs,
-        CtxRef<Expr>&& rhs
+        CRef<Expr>&& lhs,
+        CRef<Expr>&& rhs
     ) : m_type { type },
         m_lhs { std::move(lhs) },
         m_rhs { std::move(rhs) }
     {
     }
 
-    CtxRef<TreeNode> BinaryExpr::clone()
+    CRef<TreeNode> BinaryExpr::clone()
     {
-        return GetNodeContext().make<BinaryExpr>(
+        return context().make<BinaryExpr>(
             m_type,
-            GetNodeContext().clone(m_lhs),
-            GetNodeContext().clone(m_rhs)
+            context().clone(m_lhs),
+            context().clone(m_rhs)
         );
     }
 
-    void BinaryExpr::setLhs(CtxRef<Expr>&& lhs)
+    void BinaryExpr::setLhs(CRef<Expr>&& lhs)
     {
         m_lhs = std::move(lhs);
     }
 
-    void BinaryExpr::setRhs(CtxRef<Expr>&& rhs)
+    void BinaryExpr::setRhs(CRef<Expr>&& rhs)
     {
         m_rhs = std::move(rhs);
     }
@@ -50,85 +99,85 @@ namespace kate::sc::ast {
         return m_type;
     }
 
-    CtxRef<Expr>& BinaryExpr::lhs()
+    CRef<Expr>& BinaryExpr::lhs()
     {
         return m_lhs;
     }
 
-    CtxRef<Expr>& BinaryExpr::rhs()
+    CRef<Expr>& BinaryExpr::rhs()
     {
         return m_rhs;
     }
 
-    ReturnStat::ReturnStat(CtxRef<Expr>&& expr)
+    ReturnStat::ReturnStat(CRef<Expr>&& expr)
         : m_expr { std::move(expr) }
     {
     }
 
-    CtxRef<TreeNode> ReturnStat::clone()
+    CRef<TreeNode> ReturnStat::clone()
     {
-        return GetNodeContext().make<ReturnStat>(
-            GetNodeContext().clone(m_expr)
+        return context().make<ReturnStat>(
+            context().clone(m_expr)
         );
     }
 
-    CtxRef<Expr>& ReturnStat::expr()
+    CRef<Expr>& ReturnStat::expr()
     {
         return m_expr;
     }
 
-    Attr::Attr(Attr::Type type, std::vector<CtxRef<Expr>>&& args)
+    Attr::Attr(Attr::Type type, std::vector<CRef<Expr>>&& args)
         : m_type { type },
             m_args { std::move(args) }
     {
     }
 
-    CtxRef<TreeNode> Attr::clone()
+    CRef<TreeNode> Attr::clone()
     {
-        return GetNodeContext().make<Attr>(
+        return context().make<Attr>(
             m_type,
-            GetNodeContext().clone(m_args)
+            context().clone(m_args)
         );
     }
 
     FuncArg::FuncArg(
         const std::string& name,
-        std::vector<CtxRef<Attr>>&& attrs
+        std::vector<CRef<Attr>>&& attrs
     ) : m_attrs { std::move(attrs) }
     {
         m_name = name;
     }
 
-    CtxRef<TreeNode> FuncArg::clone()
+    CRef<TreeNode> FuncArg::clone()
     {
-        return GetNodeContext().make<FuncArg>(
+        return context().make<FuncArg>(
             m_name,
-            GetNodeContext().clone(m_attrs)
+            context().clone(m_attrs)
         );
     }
 
-    std::vector<CtxRef<Attr>>& FuncArg::attrs()
+    std::vector<CRef<Attr>>& FuncArg::attrs()
     {
         return m_attrs;
     }
 
     FuncDecl::FuncDecl(
         const std::string& name,
-        std::vector<CtxRef<Attr>>&& attrs
+        std::vector<CRef<Attr>>&& attrs
     ) : m_attrs { attrs }
     {
         m_name = name;
     }
 
-    CtxRef<TreeNode> FuncDecl::clone()
+    CRef<TreeNode> FuncDecl::clone()
     {
-        return GetNodeContext().make<FuncDecl>(
+        return context().make<FuncDecl>(
             m_name,
-            GetNodeContext().clone(m_attrs)
+            context().clone(m_attrs)
         );
     }
 
-    std::vector<CtxRef<Attr>>& FuncDecl::attrs()
+    std::vector<CRef<Attr>>& FuncDecl::attrs()
     {
         return m_attrs;
     }
@@ -138,71 +187,71 @@ namespace kate::sc::ast {
         m_name = name;
     }
 
-    CtxRef<TreeNode> VarDecl::clone()
+    CRef<TreeNode> VarDecl::clone()
     {
-        return GetNodeContext().make<VarDecl>(
+        return context().make<VarDecl>(
             m_name
         );
     }
 
     VarStat::VarStat(
-        CtxRef<VarDecl>&& vardecl,
-        CtxRef<Expr>&& initializer
+        CRef<VarDecl>&& vardecl,
+        CRef<Expr>&& initializer
     ) : m_vardecl { std::move(vardecl) },
         m_initializer { std::move(initializer) }
     {
     }
 
-    CtxRef<TreeNode> VarStat::clone()
+    CRef<TreeNode> VarStat::clone()
     {
-        return GetNodeContext().make<VarStat>(
-            GetNodeContext().clone(m_vardecl),
+        return context().make<VarStat>(
+            context().clone(m_vardecl),
             (m_initializer) ? 
-            GetNodeContext().clone(m_initializer) : CtxRef<Expr>()
+            context().clone(m_initializer) : CRef<Expr>()
         );
     }
 
     Type::Type(
         const std::string& id,
-        std::vector<CtxRef<Expr>>&& generic_expression_list
+        std::vector<CRef<Expr>>&& generic_expression_list
     ) : m_id { id },
         m_generic_expression_list { std::move(generic_expression_list) }
     {
     }
 
-    CtxRef<TreeNode> Type::clone()
+    CRef<TreeNode> Type::clone()
     {
-        return GetNodeContext().make<Type>(
+        return context().make<Type>(
             m_id,
-            GetNodeContext().clone(m_generic_expression_list)
+            context().clone(m_generic_expression_list)
         );
     }
 
-    std::vector<CtxRef<Expr>>& Type::generic_expression_list()
+    std::vector<CRef<Expr>>& Type::generic_expression_list()
     {
         return m_generic_expression_list;
     }
 
     StructMember::StructMember(
-        CtxRef<Type>&& type,
+        CRef<Type>&& type,
         const std::string& name,
-        std::vector<CtxRef<Attr>>&& attrs
+        std::vector<CRef<Attr>>&& attrs
     ) : m_type { std::move(type) },
         m_attrs { std::move(attrs) }
     {
         m_name = name;
     }
 
-    CtxRef<TreeNode> StructMember::clone()
+    CRef<TreeNode> StructMember::clone()
     {
-        return GetNodeContext().make<StructMember>(
-            GetNodeContext().clone(m_type),
+        return context().make<StructMember>(
+            context().clone(m_type),
             m_name,
-            GetNodeContext().clone(m_attrs)
+            context().clone(m_attrs)
         );
     }
 
-    CtxRef<Type>& StructMember::type()
+    CRef<Type>& StructMember::type()
     {
         return m_type;
     }
@@ -212,85 +261,85 @@ namespace kate::sc::ast {
         return m_name;
     }
 
-    std::vector<CtxRef<Attr>>& StructMember::attrs()
+    std::vector<CRef<Attr>>& StructMember::attrs()
     {
         return m_attrs;
     }
 
     BlockStat::BlockStat(
-        std::vector<CtxRef<Stat>>&& stats
+        std::vector<CRef<Stat>>&& stats
     ) : m_stats { std::move(stats) }
     {
     }
 
-    CtxRef<TreeNode> BlockStat::clone()
+    CRef<TreeNode> BlockStat::clone()
     {
-        return GetNodeContext().make<BlockStat>(
-            GetNodeContext().clone(m_stats)
+        return context().make<BlockStat>(
+            context().clone(m_stats)
         );
     }
 
-    std::vector<CtxRef<Stat>>& BlockStat::stats()
+    std::vector<CRef<Stat>>& BlockStat::stats()
     {
         return m_stats;
     }
 
-    ExprStat::ExprStat(CtxRef<Expr>&& expr) 
+    ExprStat::ExprStat(CRef<Expr>&& expr) 
         : m_expr { std::move(expr) }
     {
     }
 
-    CtxRef<TreeNode> ExprStat::clone()
+    CRef<TreeNode> ExprStat::clone()
     {
-        return GetNodeContext().make<ExprStat>(
-            GetNodeContext().clone(m_expr)
+        return context().make<ExprStat>(
+            context().clone(m_expr)
         );
     }
 
-    CtxRef<Expr>& ExprStat::expr()
+    CRef<Expr>& ExprStat::expr()
     {
         return m_expr;
     }
 
     IfStat::IfStat(
-        CtxRef<Expr>&& condition,
-        CtxRef<BlockStat>&& block,
-        CtxRef<BlockStat>&& elseBlock
+        CRef<Expr>&& condition,
+        CRef<BlockStat>&& block,
+        CRef<BlockStat>&& elseBlock
     ) : m_condition { std::move(condition) },
         m_block { std::move(block) },
         m_elseBlock { std::move(elseBlock) }
     {
     }
 
-    CtxRef<TreeNode> IfStat::clone()
+    CRef<TreeNode> IfStat::clone()
     {
-        return GetNodeContext().make<IfStat>(
-            GetNodeContext().clone(m_condition),
-            GetNodeContext().clone(m_block),
-            m_elseBlock ? GetNodeContext().clone(m_elseBlock) : CtxRef<BlockStat>()
+        return context().make<IfStat>(
+            context().clone(m_condition),
+            context().clone(m_block),
+            m_elseBlock ? context().clone(m_elseBlock) : CRef<BlockStat>()
         );
     }
 
-    CtxRef<Expr>& IfStat::condition()
+    CRef<Expr>& IfStat::condition()
     {
         return m_condition;
     }
 
-    CtxRef<BlockStat>& IfStat::block()
+    CRef<BlockStat>& IfStat::block()
     {
         return m_block;
     }
 
-    CtxRef<BlockStat>& IfStat::elseBlock()
+    CRef<BlockStat>& IfStat::elseBlock()
     {
         return m_elseBlock;
     }
 
     ForStat::ForStat(
-        CtxRef<ExprStat>&& initializer,
-        CtxRef<Expr>&& condition,
-        CtxRef<ExprStat>&& continuing,
-        CtxRef<BlockStat>&& block
+        CRef<ExprStat>&& initializer,
+        CRef<Expr>&& condition,
+        CRef<ExprStat>&& continuing,
+        CRef<BlockStat>&& block
     ) : m_initializer { std::move(initializer) },
         m_condition { std::move(condition) },
         m_continuing { std::move(continuing) },
@@ -298,85 +347,85 @@ namespace kate::sc::ast {
     {
     }
 
-    CtxRef<TreeNode> ForStat::clone()
+    CRef<TreeNode> ForStat::clone()
     {
-        return GetNodeContext().make<ForStat>(
-            GetNodeContext().clone(m_initializer),
-            GetNodeContext().clone(m_condition),
-            GetNodeContext().clone(m_continuing),
-            GetNodeContext().clone(m_block)
+        return context().make<ForStat>(
+            context().clone(m_initializer),
+            context().clone(m_condition),
+            context().clone(m_continuing),
+            context().clone(m_block)
         );
     }
 
-    CtxRef<ExprStat>& ForStat::initializer()
+    CRef<ExprStat>& ForStat::initializer()
     {
         return m_initializer;
     }
 
-    CtxRef<Expr>& ForStat::condition()
+    CRef<Expr>& ForStat::condition()
     {
         return m_condition;
     }
 
-    CtxRef<ExprStat>& ForStat::continuing()
+    CRef<ExprStat>& ForStat::continuing()
     {
         return m_continuing;
     }
 
-    CtxRef<BlockStat>& ForStat::block()
+    CRef<BlockStat>& ForStat::block()
     {
         return m_block;
     }
 
-    WhileStat::WhileStat(CtxRef<Expr>&& condition, CtxRef<BlockStat>&& block)
+    WhileStat::WhileStat(CRef<Expr>&& condition, CRef<BlockStat>&& block)
         : m_condition { std::move(condition) },
             m_block { std::move(block) }
     {
     }
 
-    CtxRef<TreeNode> WhileStat::clone()
+    CRef<TreeNode> WhileStat::clone()
     {
-        return GetNodeContext().make<WhileStat>(
-            GetNodeContext().clone(m_condition),
-            GetNodeContext().clone(m_block)
+        return context().make<WhileStat>(
+            context().clone(m_condition),
+            context().clone(m_block)
         );
     }
 
-    CtxRef<Expr>& WhileStat::condition()
+    CRef<Expr>& WhileStat::condition()
     {
         return m_condition;
     }
 
-    CtxRef<TreeNode> BreakStat::clone()
+    CRef<TreeNode> BreakStat::clone()
     {
-        return GetNodeContext().make<BreakStat>();
+        return context().make<BreakStat>();
     }
 
     StructDecl::StructDecl(
         const std::string& name,
-        std::vector<CtxRef<StructMember>>&& members,
-        std::vector<CtxRef<Attr>>&& attrs
+        std::vector<CRef<StructMember>>&& members,
+        std::vector<CRef<Attr>>&& attrs
     ) : m_members { std::move(members) },
         m_attrs { std::move(attrs) }
     {
         m_name = name;
     }
 
-    CtxRef<TreeNode> StructDecl::clone()
+    CRef<TreeNode> StructDecl::clone()
     {
-        return GetNodeContext().make<StructDecl>(
+        return context().make<StructDecl>(
             m_name,
-            GetNodeContext().clone(m_members),
-            GetNodeContext().clone(m_attrs)
+            context().clone(m_members),
+            context().clone(m_attrs)
         );
     }
 
-    std::vector<CtxRef<StructMember>>& StructDecl::members()
+    std::vector<CRef<StructMember>>& StructDecl::members()
     {
         return m_members;
     }
 
-    std::vector<CtxRef<Attr>>& StructDecl::attrs()
+    std::vector<CRef<Attr>>& StructDecl::attrs()
     {
         return m_attrs;
     }

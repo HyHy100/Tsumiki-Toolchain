@@ -3,15 +3,14 @@
 
 #include <iostream>
 
-namespace kate {
+namespace kate::sc {
     int start(int argc, char* argv[]) {
         if (argc == 1) {
             std::cerr << "Missing shader source file." << std::endl;
             return 1;
         }
 
-        sc::ast::NodeContext ctx;
-        auto func_decl = ctx.make<sc::ast::FuncDecl>(
+        auto func_decl = ast::context().make<sc::ast::FuncDecl>(
             "Hello!"
         );
 
@@ -23,5 +22,5 @@ namespace kate {
 }
 
 int main(int argc, char* argv[]) {
-    return kate::start(argc, argv);
+    return kate::sc::start(argc, argv);
 }
