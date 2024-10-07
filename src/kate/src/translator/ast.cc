@@ -133,6 +133,35 @@ namespace kate::sc::ast {
         return m_attrs;
     }
 
+    VarDecl::VarDecl(const std::string& name)
+    {
+        m_name = name;
+    }
+
+    CtxRef<TreeNode> VarDecl::clone()
+    {
+        return GetNodeContext().make<VarDecl>(
+            m_name
+        );
+    }
+
+    VarStat::VarStat(
+        CtxRef<VarDecl>&& vardecl,
+        CtxRef<Expr>&& initializer
+    ) : m_vardecl { std::move(vardecl) },
+        m_initializer { std::move(initializer) }
+    {
+    }
+
+    CtxRef<TreeNode> VarStat::clone()
+    {
+        return GetNodeContext().make<VarStat>(
+            GetNodeContext().clone(m_vardecl),
+            (m_initializer) ? 
+            GetNodeContext().clone(m_initializer) : CtxRef<Expr>()
+        );
+    }
+
     Type::Type(
         const std::string& id,
         std::vector<CtxRef<Expr>>&& generic_expression_list
@@ -375,6 +404,9 @@ TS_RTTI_TYPE(ast::BlockStat)
 TS_RTTI_TYPE(ast::ExprStat)
 TS_RTTI_TYPE(ast::ReturnStat)
 TS_RTTI_TYPE(ast::BreakStat)
+
+TS_RTTI_TYPE(ast::VarDecl)
+TS_RTTI_TYPE(ast::VarStat)
 
 TS_RTTI_TYPE(ast::Module)
 TS_RTTI_TYPE(ast::Type)

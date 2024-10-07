@@ -339,6 +339,15 @@ namespace kate::sc::ast {
         std::vector<CtxRef<Attr>>& m_attrs;
     };
 
+    class VarDecl final : public base::rtti::Castable<VarDecl, Decl> {
+    public:
+        VarDecl(
+            const std::string& name
+        );
+
+        CtxRef<TreeNode> clone() override;
+    };
+
     class Type final : public base::rtti::Castable<Type, Expr> {
     public:
         Type(
@@ -385,6 +394,19 @@ namespace kate::sc::ast {
         std::vector<CtxRef<Stat>>& stats();
     private:
         std::vector<CtxRef<Stat>> m_stats;
+    };
+
+    class VarStat final : public base::rtti::Castable<VarStat, Stat> {
+    public:
+        VarStat(
+            CtxRef<VarDecl>&& vardecl,
+            CtxRef<Expr>&& initializer = {}
+        );
+
+        CtxRef<TreeNode> clone() override;
+    private:
+        CtxRef<VarDecl> m_vardecl;
+        CtxRef<Expr> m_initializer;
     };
 
     class ExprStat final : public base::rtti::Castable<ExprStat, Stat> {
