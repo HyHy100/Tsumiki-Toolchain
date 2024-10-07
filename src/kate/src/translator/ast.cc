@@ -387,15 +387,12 @@ using namespace kate::sc;
 TS_RTTI_TYPE(ast::TreeNode)
 TS_RTTI_TYPE(ast::Attr)
 TS_RTTI_TYPE(ast::Decl)
-
 TS_RTTI_TYPE(ast::Expr)
 TS_RTTI_TYPE(ast::BinaryExpr)
-
 TS_RTTI_TYPE(ast::FuncArg)
 TS_RTTI_TYPE(ast::FuncDecl)
 TS_RTTI_TYPE(ast::StructMember)
 TS_RTTI_TYPE(ast::StructDecl)
-
 TS_RTTI_TYPE(ast::Stat)
 TS_RTTI_TYPE(ast::IfStat)
 TS_RTTI_TYPE(ast::ForStat)
@@ -404,9 +401,7 @@ TS_RTTI_TYPE(ast::BlockStat)
 TS_RTTI_TYPE(ast::ExprStat)
 TS_RTTI_TYPE(ast::ReturnStat)
 TS_RTTI_TYPE(ast::BreakStat)
-
 TS_RTTI_TYPE(ast::VarDecl)
 TS_RTTI_TYPE(ast::VarStat)
-
 TS_RTTI_TYPE(ast::Module)
 TS_RTTI_TYPE(ast::Type)

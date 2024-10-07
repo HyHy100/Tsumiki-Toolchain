@@ -10,9 +10,10 @@ set_target_properties(
 target_sources(
     ksc
     PRIVATE 
-    lexer.cc 
-    ast.cc 
+    lexer.cc
+    ast.cc
     main.cc
+    parser.cc
 )
 
 target_link_libraries(ksc base)

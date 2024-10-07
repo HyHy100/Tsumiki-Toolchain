@@ -81,6 +81,9 @@
         "queue": "cpp",
         "*.inc": "cpp",
         "*.def": "cpp",
-        "span": "cpp"
+        "span": "cpp",
+        "expected": "cpp",
+        "__memory": "cpp",
+        "regex": "cpp"
     }
 }
