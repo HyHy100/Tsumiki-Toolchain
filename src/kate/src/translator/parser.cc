@@ -193,16 +193,17 @@ namespace kate::tlr {
         type = ast::Attr::Type::kGroup;
       else if (ident.value == "binding")
         type = ast::Attr::Type::kBinding;
+
+      Result<std::vector<ast::CRef<ast::Expr>>> expr_list;
       
-      if (!matches(Token::Type::kLeftParen))
-        return error("missing '(' after attribute name.");
+      if (matches(Token::Type::kLeftParen)) {
+        expr_list = parse_expression_list();
 
-      auto expr_list = parse_expression_list();
+        if (expr_list.errored) return Failure::kError;
 
-      if (expr_list.errored) return Failure::kError;
-
-      if (!matches(Token::Type::kRightParen))
-        return error("missing ')' at end of attribute parameters.");
+        if (!matches(Token::Type::kRightParen))
+          return error("missing ')' at end of attribute parameters.");
+      }
 
       attribute_list.push_back(
         ast::context().make<ast::Attr>(
