@@ -16,4 +16,4 @@ target_sources(
   parser.cc
 )
 
-target_link_libraries(ksc base)
+target_link_libraries(ksc base fmt)

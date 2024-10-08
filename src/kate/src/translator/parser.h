@@ -1,6 +1,7 @@
 #pragma once
 
 #include <optional>
+#include <functional>
 
 #include "lexer.h"
 #include "ast.h"
@@ -64,9 +65,13 @@ namespace kate::tlr {
 
         Result<ast::CRef<ast::Decl>> parse_global_declaration();
 
-        Result<ast::CRef<ast::FuncDecl>> parse_func_decl();
+        Result<ast::CRef<ast::FuncDecl>> parse_func_decl(
+          std::vector<ast::CRef<ast::Attr>>& attributes
+        );
 
-        Result<ast::CRef<ast::BufferDecl>> parse_buffer_decl();
+        Result<ast::CRef<ast::BufferDecl>> parse_buffer_decl(
+          std::vector<ast::CRef<ast::Attr>>& attributes
+        );
 
         Result<ast::CRef<ast::Type>> expect_type();
 
@@ -81,6 +86,8 @@ namespace kate::tlr {
         Result<ast::CRef<ast::Expr>> parse_expr();
 
         Result<ast::CRef<ast::Expr>> primary_expr();
+
+        Result<ast::CRef<ast::IdExpr>> identifier_expr();
 
         Result<ast::CRef<ast::LitExpr>> literal_expr();
 

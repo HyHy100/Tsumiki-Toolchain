@@ -1,5 +1,7 @@
 #include "parser.h"
 
+#include <fmt/format.h>
+
 namespace kate::tlr {
   Parser::Parser(
     const ParserOptions& options
@@ -15,9 +17,13 @@ namespace kate::tlr {
     std::vector<ast::CRef<ast::Decl>> global_decls;
 
     while (should_continue()) {
+      fmt::println("processing....");
+
       auto decl = parse_global_declaration();
 
       if (!decl.matched) return {};
+
+      fmt::println("Adding new global declaration: {}", decl.value->name());
 
       global_decls.push_back(std::move(decl.value));
     }
@@ -27,8 +33,17 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::Decl>> Parser::parse_global_declaration()
   {
-    if (auto func = parse_func_decl(); func.matched)
+    auto attrs = parse_attributes();
+
+    fmt::println("attribute count: {}", attrs.value.size());
+
+    if (auto func = parse_func_decl(attrs.value); func.matched)
       return func;
+
+    if (auto buffer = parse_buffer_decl(attrs.value); buffer.matched) {
+      fmt::println("buffer name2: ", buffer->name());
+      return buffer;
+    }
 
     // if all global declarations failed, then
     // synchronize to the next '}' and fail.
@@ -72,14 +87,14 @@ namespace kate::tlr {
     std::vector<ast::CRef<ast::Expr>> expr_list;
     expr_list.push_back(std::move(expr.value));
 
-    do {
+    while (matches(Token::Type::kComma)) {
       expr = parse_expr();
 
       if (!expr.matched)
         return error("missing a expression after ',' while parsing a expression list.");
 
       expr_list.push_back(std::move(expr.value));
-    } while (matches(Token::Type::kComma));
+    }
 
     return expr_list;
   }
@@ -133,6 +148,18 @@ namespace kate::tlr {
   Result<ast::CRef<ast::Expr>> Parser::primary_expr()
   {
     if (auto lit = literal_expr(); lit.matched) return lit;
+
+    if (auto idexpr = identifier_expr(); idexpr.matched) return idexpr;
+
+    return Failure::kNoMatch;
+  }
+
+  Result<ast::CRef<ast::IdExpr>> Parser::identifier_expr()
+  {
+    if (auto id = matches(Token::Type::kIdent))
+      return ast::context().make<ast::IdExpr>(
+        std::string(id->value_as<std::string_view>())
+      );
 
     return Failure::kNoMatch;
   }
@@ -188,7 +215,9 @@ namespace kate::tlr {
     return attribute_list;
   }
 
-  Result<ast::CRef<ast::BufferDecl>> Parser::parse_buffer_decl()
+  Result<ast::CRef<ast::BufferDecl>> Parser::parse_buffer_decl(
+    std::vector<ast::CRef<ast::Attr>>& attributes
+  )
   {
     if (matches("buffer")) {
       std::vector<ast::CRef<ast::Expr>> expr_list;
@@ -227,7 +256,9 @@ namespace kate::tlr {
     return Failure::kNoMatch;
   }
 
-  Result<ast::CRef<ast::FuncDecl>> Parser::parse_func_decl()
+  Result<ast::CRef<ast::FuncDecl>> Parser::parse_func_decl(
+    std::vector<ast::CRef<ast::Attr>>& attributes
+  )
   {
     if (matches("fn")) {
       auto function_name = parse_name();
@@ -303,12 +334,12 @@ namespace kate::tlr {
   )
   {
     if (m_options.error_callback) {
-      std::string composed_message = "parser error: (";
-      composed_message += m_lexer[offset].location().line;
-      composed_message += ":";
-      composed_message += m_lexer[offset].location().column;
-      composed_message += "): ";
-      composed_message += message;
+      auto composed_message = fmt::format(
+        "PARSER ERROR ({}:{}): {}",
+        m_lexer[offset].location().line,
+        m_lexer[offset].location().column,
+        message
+      );
 
       m_options.error_callback(composed_message);
     }
@@ -347,12 +378,15 @@ namespace kate::tlr {
     if (offset + 1 >= m_lexer.tokenCount()) 
       return nullptr;
 
-    return (m_lexer[1 + offset].type() == Token::Type::kIdent) ? &m_lexer[++offset] : nullptr;
+    return (
+      m_lexer[1 + offset].type() == Token::Type::kIdent &&
+      m_lexer[1 + offset].value_as<std::string_view>() == identifier
+    ) ? &m_lexer[++offset] : nullptr;
   }
 
   bool Parser::should_continue()
   {
-    return m_lexer[offset].is(Token::Type::kEOF);
+    return offset + 1 < m_lexer.tokenCount() && !m_lexer[offset + 1].is(Token::Type::kEOF);
   }
 
   template<typename T>

@@ -1,17 +1,25 @@
-#include "lexer.h"
-#include "ast.h"
+#include "parser.h"
 
-#include <iostream>
+#include <fmt/format.h>
 
 namespace kate::tlr {
+  void error_callback(const std::string_view& message) {
+      fmt::println("PARSER ERROR: {}", message);
+    };
+
   int start(int argc, char* argv[]) {
-    if (argc == 1) {
+    /*if (argc == 1) {
       std::cerr << "Missing shader source file." << std::endl;
       return 1;
-    }
+    }*/
 
-    tlr::Lexer lexer;
-    lexer.tokenize(argv[1]);
+    tlr::Parser parser(tlr::ParserOptions {
+      .error_callback = error_callback
+    });
+
+    parser.parse(R"(@group(0) @binding(0) 
+buffer<read> buffer1: f32;
+)");
 
     return 0;
   }

@@ -7,6 +7,9 @@
 #include <type_traits>
 #include <cstdint>
 #include <functional>
+#include <cassert>
+#include <cstdint>
+#include <fmt/format.h>
 
 #include "base/rtti.h"
 
@@ -138,7 +141,10 @@ namespace kate::tlr::ast {
     {
       auto it = m_ctx.find(id);
 
-      if (it == m_ctx.end()) return nullptr;
+      if (it == m_ctx.end()) {
+        assert(false); 
+        return nullptr;
+      }
 
       return it->second.get();
     }
@@ -201,15 +207,13 @@ namespace kate::tlr::ast {
     std::unordered_map<uint64_t, std::unique_ptr<TreeNode>> m_ctx;
   };
 
-  static ASTContext& context()
-  {
-    static ASTContext nctx;
-    return nctx;
-  }
+  ASTContext& context();
 
   template<typename T>
   T* CRef<T>::get()
   {
+    assert(m_id != std::numeric_limits<uint64_t>::max());
+
     if (m_id == std::numeric_limits<uint64_t>::max()) return nullptr;
 
     return static_cast<T*>(context().get(m_id));
@@ -266,27 +270,27 @@ namespace kate::tlr::ast {
     {
       switch (type) {
         case Type::kU32:
-          assert(std::is_same_v<V, uint32_t>);
+          //assert(std::is_same_v<V, uint32_t>);
           m_value = value;
           break;
         case Type::kU64:
-          assert(std::is_same_v<V, uint64_t>);
+          //assert(std::is_same_v<V, uint64_t>);
           m_value = value;
           break;
         case Type::kI32:
-          assert(std::is_same_v<V, int32_t>);
+          //assert(std::is_same_v<V, int32_t>);
           m_value = reinterpret_cast<uint32_t>(value);
           break;
         case Type::kI64:
-          assert(std::is_same_v<V, int64_t>);
+          //assert(std::is_same_v<V, int64_t>);
           m_value = reinterpret_cast<uint64_t>(value);
           break;
         case Type::kF32:
-          assert(std::is_same_v<V, float>);
+          //assert(std::is_same_v<V, float>);
           m_value = reinterpret_cast<uint64_t>(value);
           break;
         case Type::kF64:
-          assert(std::is_same_v<V, double>);
+          //assert(std::is_same_v<V, double>);
           m_value = reinterpret_cast<uint64_t>(value);
           break;
       }

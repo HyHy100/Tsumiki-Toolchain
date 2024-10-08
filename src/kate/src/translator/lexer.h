@@ -34,7 +34,7 @@ namespace kate::tlr {
       kPercentEqual,  // %=
       kMulEq,     // *=
 
-      kLnBrk,
+      //kLnBrk,
 
       kIncrement,   // ++
       kDecrement,   // --
@@ -65,7 +65,7 @@ namespace kate::tlr {
 
       kSemicolon, // ;
 
-      kWhitespace,
+      //kWhitespace,
 
       kQMark,   // ?
       

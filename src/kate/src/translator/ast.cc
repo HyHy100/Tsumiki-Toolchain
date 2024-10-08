@@ -1,6 +1,14 @@
 #include "ast.h"
 
+#include <fmt/format.h>
+
 namespace kate::tlr::ast {
+  ASTContext& context() 
+  {
+    static ASTContext nctx;
+    return nctx;
+  }
+
   const std::string& Decl::name() const
   {
     return m_name;
