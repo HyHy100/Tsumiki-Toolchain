@@ -4,15 +4,10 @@
 
 namespace kate::tlr {
   void error_callback(const std::string_view& message) {
-      fmt::println("PARSER ERROR: {}", message);
-    };
+    fmt::println("PARSER ERROR: {}", message);
+  };
 
   int start(int argc, char* argv[]) {
-    /*if (argc == 1) {
-      std::cerr << "Missing shader source file." << std::endl;
-      return 1;
-    }*/
-
     tlr::Parser parser(tlr::ParserOptions {
       .error_callback = error_callback
     });
@@ -26,8 +21,7 @@ buffer<read> buffer2: vec3f;
 @compute
 fn main() {
 
-}
-)");
+})");
 
     return 0;
   }

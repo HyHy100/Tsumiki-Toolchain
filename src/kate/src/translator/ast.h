@@ -314,6 +314,7 @@ namespace kate::tlr::ast {
       kDiv,
       kMul,
       kMod,
+
       kMemberAccess,
       kSwizzle,
 

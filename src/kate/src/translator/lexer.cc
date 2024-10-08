@@ -315,19 +315,77 @@ namespace kate::tlr {
           advance();
           break;
         case '>':
-          m_tokens.push_back(Token {
-            Token::Type::kGT,
-            std::string_view { &source[offset], 1 },
-            loc
-          });
+          if (matches(1, '>')) {
+            if (matches(2, '=')) {
+              m_tokens.push_back(Token {
+                Token::Type::kLSEq,
+                std::string_view { &source[offset], 2 },
+                loc
+              });
+
+              advance();
+            } else {
+              m_tokens.push_back(Token {
+                Token::Type::kLS,
+                std::string_view { &source[offset], 2 },
+                loc
+              });
+            }
+
+            advance();
+          } else if (matches(1, '=')) {
+            m_tokens.push_back(Token {
+              Token::Type::kGTEq,
+              std::string_view { &source[offset], 2 },
+              loc
+            });
+
+            advance();
+          } else {
+            m_tokens.push_back(Token {
+              Token::Type::kGT,
+              std::string_view { &source[offset], 1 },
+              loc
+            });
+          }
+
           advance();
           break;
         case '<':
-          m_tokens.push_back(Token {
-            Token::Type::kLT,
-            std::string_view { &source[offset], 1 },
-            loc
-          });
+          if (matches(1, '<')) {
+            if (matches(2, '=')) {
+              m_tokens.push_back(Token {
+                Token::Type::kRSEq,
+                std::string_view { &source[offset], 2 },
+                loc
+              });
+
+              advance();
+            } else {
+              m_tokens.push_back(Token {
+                Token::Type::kRS,
+                std::string_view { &source[offset], 2 },
+                loc
+              });
+            }
+
+            advance();
+          } else if (matches(1, '=')) {
+            m_tokens.push_back(Token {
+              Token::Type::kLTEq,
+              std::string_view { &source[offset], 2 },
+              loc
+            });
+
+            advance();
+          } else {
+            m_tokens.push_back(Token {
+              Token::Type::kLT,
+              std::string_view { &source[offset], 1 },
+              loc
+            });
+          }
+
           advance();
           break;
         case '(':
@@ -339,19 +397,40 @@ namespace kate::tlr {
           advance();
           break;
         case '%':
-          m_tokens.push_back(Token {
-            Token::Type::kPercent,
-            std::string_view { &source[offset], 1 },
-            loc
-          });
+          if (matches(1, '=')) {
+            m_tokens.push_back(Token {
+              Token::Type::kPercentEq,
+              std::string_view { &source[offset], 2 },
+              loc
+            });
+
+            advance();
+          } else {
+            m_tokens.push_back(Token {
+              Token::Type::kPercent,
+              std::string_view { &source[offset], 1 },
+              loc
+            });
+          }
+
           advance();
           break;
         case '|':
-          m_tokens.push_back(Token {
-            Token::Type::kOr,
-            std::string_view { &source[offset], 1 },
-            loc
-          });
+          if (matches(1, '=')) {
+            m_tokens.push_back(Token {
+              Token::Type::kOrEq,
+              std::string_view { &source[offset], 2 },
+              loc
+            });
+
+            advance();
+          } else {
+            m_tokens.push_back(Token {
+              Token::Type::kOr,
+              std::string_view { &source[offset], 1 },
+              loc
+            });
+          }
           advance();
           break;
         case '@':
@@ -375,7 +454,7 @@ namespace kate::tlr {
         case '/':
           if (matches(1, '=')) {
             m_tokens.push_back(Token {
-              Token::Type::kDivideEqual,
+              Token::Type::kDivideEq,
               std::string_view { &source[offset], 2 },
               loc
             });
@@ -404,11 +483,30 @@ namespace kate::tlr {
           });
           advance();
           break;
+        case '^':
+          if (matches(1, '=')) {
+            m_tokens.push_back(Token {
+              Token::Type::kXorEq,
+              std::string_view { &source[offset], 2 },
+              loc
+            });
+
+            advance();
+          } else {
+            m_tokens.push_back(Token {
+              Token::Type::kXor,
+              std::string_view { &source[offset], 1 },
+              loc
+            });
+          }
+
+          advance();
+          break;
         case '\'':
         case '+':
           if (matches(1, '=')) {
             m_tokens.push_back(Token {
-              Token::Type::kPlusEqual,
+              Token::Type::kPlusEq,
               std::string_view { &source[offset], 2 },
               loc
             });
@@ -432,7 +530,7 @@ namespace kate::tlr {
         case '-':
           if (matches(1, '=')) {
             m_tokens.push_back(Token {
-              Token::Type::kMinusEqual,
+              Token::Type::kMinusEq,
               std::string_view { &source[offset], 2 },
               loc
             });
@@ -462,6 +560,7 @@ namespace kate::tlr {
               std::string_view { &source[offset], 2 },
               loc
             });
+            
             advance();
           } else {
             m_tokens.push_back(Token {
@@ -492,16 +591,13 @@ namespace kate::tlr {
         case '\r': {           
           if (matches(1, '\n')) {
             advance();
-
             /*m_tokens.push_back(Token {
               Token::Type::kLnBrk,
               std::string_view { &source[offset], 2 },
               loc
             });*/
           }
-
           advance();
-          
           break;
         }
         case '\n':

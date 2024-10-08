@@ -35,21 +35,87 @@ namespace kate::tlr {
   {
     auto attrs = parse_attributes();
 
-    fmt::println("attribute count: {}", attrs.value.size());
-
     if (auto func = parse_func_decl(attrs.value); func.matched)
       return func;
 
-    if (auto buffer = parse_buffer_decl(attrs.value); buffer.matched) {
-      fmt::println("buffer name2: ", buffer->name());
+    if (auto buffer = parse_buffer_decl(attrs.value); buffer.matched)
       return buffer;
-    }
 
     // if all global declarations failed, then
     // synchronize to the next '}' and fail.
     sync_to(Token::Type::kRBrace);
 
     return {};
+  }
+
+  int Parser::get_precedence(const Token& tk) {
+    // https://learnwebgl.brown37.net/12_shader_language/glsl_mathematical_operations.html#glsl-operators
+    switch (tk.type()) {
+            case Token::Type::kOrEq:
+            case Token::Type::kXorEq:
+            case Token::Type::kAndEq:
+            case Token::Type::kRSEq:
+            case Token::Type::kLSEq:
+            case Token::Type::kPercentEq:
+            case Token::Type::kDivideEq:
+            case Token::Type::kMulEq:
+            case Token::Type::kMinusEq:
+            case Token::Type::kPlusEq:
+            case Token::Type::kEqual:
+                return 0;
+            case Token::Type::kOrOr:
+            case Token::Type::kAndAnd:
+                return 1;
+            case Token::Type::kEqEq:
+            case Token::Type::kNotEq:
+                return 2;
+            case Token::Type::kOr:
+            case Token::Type::kXor:
+            case Token::Type::kAnd:
+                return 3;
+            case Token::Type::kGT:
+            case Token::Type::kGTEq:
+            case Token::Type::kLT:
+            case Token::Type::kLTEq:
+                return 4;
+            case Token::Type::kLS:
+            case Token::Type::kRS:
+                return 5;
+            case Token::Type::kPlus:
+            case Token::Type::kMinus:
+                return 6;
+            case Token::Type::kAsterisk:
+            case Token::Type::kSlash:
+            case Token::Type::kPercent:
+                return 7;
+            case Token::Type::kDot:
+            case Token::Type::kLBracket:
+                return 8;
+            default:
+                return -1;
+        }
+
+    assert(false);
+    //unreachable();
+  }
+
+  Parser::Associativity Parser::get_associativity(const Token& tk) {
+      switch (tk.type()) {
+          case Token::Type::kMinus:
+          case Token::Type::kAsterisk:
+          case Token::Type::kSlash:
+          case Token::Type::kComma:
+          case Token::Type::kPercent:
+          case Token::Type::kPlus:
+          case Token::Type::kDot:
+          case Token::Type::kLBracket:
+              return Associativity::kLeft;
+          default:
+              return Associativity::kRight;
+      }
+
+      assert(false);
+      //unreachable();
   }
 
   Result<ast::CRef<ast::Stat>> Parser::statement()
@@ -147,9 +213,17 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::Expr>> Parser::primary_expr()
   {
-    if (auto lit = literal_expr(); lit.matched) return lit;
+    auto litexpr = literal_expr();
+    
+    if (litexpr.matched) return litexpr;
 
-    if (auto idexpr = identifier_expr(); idexpr.matched) return idexpr;
+    if (litexpr.errored) return Failure::kError;
+
+    auto idexpr = identifier_expr(); 
+    
+    if (idexpr.matched) return idexpr;
+
+    if (idexpr.errored) return Failure::kError;
 
     return Failure::kNoMatch;
   }

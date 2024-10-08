@@ -15,69 +15,57 @@ namespace kate::tlr {
     enum class Type {
       kInt16,
       kUint16,
-
-      kInt32,     // integers
+      kInt32,
       kInt64,
-
       kUint32,
       kUint64,
-
-      kFlt32,     // float
+      kFlt32,
       kFlt64,
-
+      kIncrement, // ++
+      kDecrement, // --
       kColon,     // :
-
       kEqual,     // =
-      kPlusEqual,   // +=
-      kMinusEqual,  // -=
-      kDivideEqual,   // /=
-      kPercentEqual,  // %=
+      kPlusEq,    // +=
+      kMinusEq,   // -=
+      kDivideEq,  // /=
+      kPercentEq, // %=
       kMulEq,     // *=
-
-      //kLnBrk,
-
-      kIncrement,   // ++
-      kDecrement,   // --
-
-      kAnd,     // &
-      kOr,    // |
-
-      kPlus,    // +
-      kMinus,   // -
+      kAnd,       // &
+      kOr,        // |
+      kOrEq,      // |=
+      kXor,       // ^
+      kXorEq,     // ^=
+      kAndEq,     // &=
+      kRS,        // >>
+      kLS,        // <<
+      kRSEq,      // >>=
+      kLSEq,      // <<=
+      kEqEq,      // ==
+      kNotEq,     // !=
+      kAndAnd,    // &&
+      kOrOr,      // ||
+      kPlus,      // +
+      kMinus,     // -
       kAsterisk,  // *
-      kSlash,   // /
+      kSlash,     //
       kPercent,   // %
-
-      kGTEq,    // >=
-      kLTEq,    // <=
-
-      kGT,    // >
-      kLT,    // <
-
+      kGTEq,      // >=
+      kLTEq,      // <=
+      kGT,        // >
+      kLT,        // <
       kLBracket,  // [
       kRBracket,  // ]
-
-      kLBrace,  // {
-      kRBrace,  // }
-
-      kComma,   // ,
-      kDot,     // .
-
+      kLBrace,    // {
+      kRBrace,    // }
+      kComma,     // ,
+      kDot,       // .
       kSemicolon, // ;
-
-      //kWhitespace,
-
-      kQMark,   // ?
-      
+      kQMark,     // ?
       kLeftParen, // (
       kRightParen,// )
-
-      kAt,    // @
-
-      kIdent,   // identifier
-
+      kAt,        // @
+      kIdent,     // identifier
       kEOF,
-
       kCount
     };
 

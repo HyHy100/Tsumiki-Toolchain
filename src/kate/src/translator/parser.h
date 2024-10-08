@@ -53,6 +53,14 @@ namespace kate::tlr {
 
         ast::CRef<ast::Module> parse(const std::string_view& source);
     private:
+        enum class Associativity {
+          kLeft, kRight
+        };
+
+        int get_precedence(const Token& expr);
+
+        Associativity get_associativity(const Token& tk);
+
         bool should_continue();
 
         const Token* current();
