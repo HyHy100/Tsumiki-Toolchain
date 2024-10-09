@@ -122,9 +122,30 @@ namespace kate::tlr {
       assert(false);
   }
 
+  Result<ast::CRef<ast::ExprStat>> Parser::parse_expr_stat()
+  {
+    auto expr = parse_expr();
+
+    if (expr.errored) return Failure::kError;
+
+    if (!expr.matched) return Failure::kNoMatch;
+
+    return ast::context().make<ast::ExprStat>(std::move(expr));
+  }
+
   Result<ast::CRef<ast::Stat>> Parser::statement()
   {
-    return {};
+    Result<ast::CRef<ast::Stat>> stat = parse_expr_stat();
+
+    if (stat.errored) return Failure::kError;
+
+    // final check
+    if (!stat.matched) return error("invalid statement.");
+
+    if (!matches(Token::Type::kSemicolon))
+      return error("missing a  ';' after statement.");
+
+    return stat;
   }
 
   Result<ast::CRef<ast::BlockStat>> Parser::parse_block()

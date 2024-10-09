@@ -111,6 +111,8 @@ namespace kate::tlr {
           size_t min_precendence
         );
 
+        Result<ast::CRef<ast::ExprStat>> parse_expr_stat();
+
         Result<ast::CRef<ast::Expr>> parse_expr();
 
         Result<ast::CRef<ast::Expr>> primary_expr();
