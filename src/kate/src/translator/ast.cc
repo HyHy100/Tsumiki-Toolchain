@@ -80,8 +80,8 @@ namespace kate::tlr::ast {
   }
 
   BinaryExpr::BinaryExpr(
-    BinaryExpr::Type type,
     CRef<Expr>&& lhs,
+    BinaryExpr::Type type,
     CRef<Expr>&& rhs
   ) : m_type { type },
       m_lhs { std::move(lhs) },
@@ -92,8 +92,8 @@ namespace kate::tlr::ast {
   CRef<TreeNode> BinaryExpr::clone()
   {
     return context().make<BinaryExpr>(
-      m_type,
       context().clone(m_lhs),
+      m_type,
       context().clone(m_rhs)
     );
   }

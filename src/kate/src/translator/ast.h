@@ -346,15 +346,46 @@ namespace kate::tlr::ast {
       kCompoundMul,
       kCompoundMod,
 
-      kIndexAccessor,
       kComma,
+
+      kOrEqual,
+      kXorEqual,
+      kAndEqual,
+      kRightShiftEqual,
+      kLeftShiftEqual,
+      kModulusEqual,
+      kDivideEqual,
+      kMultiplyEqual,
+      kSubtractEqual,
+      kAddEqual,
+      kEqual,
+      kOrOr,
+      kAndAnd,
+      kBitOr,
+      kBitXor,
+      kBitAnd,
+      kEqualEqual,
+      kNotEqual,
+      kGreaterThan,
+      kGreaterThanEqual,
+      kLessThan,
+      kLessThanEqual,
+      kLeftShift,
+      kRightShift,
+      kSubtract,
+      kMultiply,
+      kDivide,
+      kModulus,
+      kIncrement,
+      kDecrement,
+      kIndexAccessor,
 
       kCount
     };
 
     BinaryExpr(
-      Type type, 
       CRef<Expr>&& lhs, 
+      Type type, 
       CRef<Expr>&& rhs
     );
 

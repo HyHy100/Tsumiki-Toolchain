@@ -48,8 +48,16 @@ namespace kate::tlr {
     return {};
   }
 
+  void Parser::advance(size_t n) {
+    if (offset + n < m_lexer.tokenCount())
+      offset += n;
+  }
+
+  const Token* Parser::peek(size_t n) {
+    return (offset + n < m_lexer.tokenCount()) ? &m_lexer[offset + n] : nullptr;
+  }
+
   int Parser::get_precedence(const Token& tk) {
-    // https://learnwebgl.brown37.net/12_shader_language/glsl_mathematical_operations.html#glsl-operators
     switch (tk.type()) {
             case Token::Type::kOrEq:
             case Token::Type::kXorEq:
@@ -291,6 +299,240 @@ namespace kate::tlr {
       );
 
     return Failure::kNoMatch;
+  }
+
+  bool Parser::is_operator(const Token& tok)
+  {
+    switch (tok.type()) {
+      case Token::Type::kOrEq:
+      case Token::Type::kXorEq:
+      case Token::Type::kAndEq:
+      case Token::Type::kRSEq:
+      case Token::Type::kLSEq:
+      case Token::Type::kPercentEq:
+      case Token::Type::kDivideEq:
+      case Token::Type::kMulEq:
+      case Token::Type::kMinusEq:
+      case Token::Type::kPlusEq:
+      case Token::Type::kEqual:
+      case Token::Type::kOrOr:
+      case Token::Type::kAndAnd:
+      case Token::Type::kEqEq:
+      case Token::Type::kNotEq:
+      case Token::Type::kGT:
+      case Token::Type::kGTEq:
+      case Token::Type::kLT:
+      case Token::Type::kLTEq:
+      case Token::Type::kIncrement:
+      case Token::Type::kDecrement:
+      case Token::Type::kDot:
+      case Token::Type::kLBracket:
+        return true;
+      default:
+        return is_numeric_operator(tok);
+    }
+
+    assert(false);
+  }
+
+  bool Parser::is_numeric_operator(const Token& tok)
+  {
+    switch (tok.type()) {
+      case Token::Type::kOr:
+      case Token::Type::kXor:
+      case Token::Type::kAnd:
+      case Token::Type::kLS:
+      case Token::Type::kRS:
+      case Token::Type::kPlus:
+      case Token::Type::kMinus:
+      case Token::Type::kAsterisk:
+      case Token::Type::kSlash:
+      case Token::Type::kPercent:
+        return true;
+      default:
+        return false;
+    }
+
+    assert(false);
+  }
+
+  Result<ast::CRef<ast::Expr>> Parser::parse_expression_1(
+    ast::CRef<ast::Expr>& lhs,
+    size_t min_precendence
+  )
+  {
+    auto* lookahead = peek(1);
+
+    if (!lookahead) return std::move(lhs);
+
+    while (lookahead && is_operator(*lookahead) && get_precedence(*lookahead) >= min_precendence) {
+      auto op = lookahead;
+
+      bool is_index_accessor = false;
+      if (op && op->type() == Token::Type::kLBracket) is_index_accessor = true;
+
+      advance();
+
+      auto rhs_expr = primary_expr();
+
+      if (rhs_expr.errored || !rhs_expr.matched) {
+          error("error while parsing expression.");
+          
+          return Failure::kError;
+      }
+
+      auto rhs = rhs_expr.unwrap();
+
+      if (is_index_accessor) {
+          matches(Token::Type::kRBracket);
+          is_index_accessor = false;
+      }
+
+      lookahead = peek(1);
+
+      while (lookahead && (
+          (is_operator(*lookahead) && get_precedence(*lookahead) > get_precedence(*op))
+          || (get_associativity(*lookahead) == Associativity::kRight 
+                          && get_precedence(*lookahead) == get_precedence(*op))))
+      {
+          if (lookahead && lookahead->type() == Token::Type::kLBracket)
+              is_index_accessor = true;
+
+          auto rhs_expr2 = parse_expression_1(
+              rhs,
+              get_precedence(*op) + ((get_precedence(*lookahead) > get_precedence(*op)) ? 1 : 0)
+          );
+
+          if (rhs_expr2.errored || !rhs_expr2.matched) {
+              error("error while parsing expression.");
+              
+              return Failure::kError;
+          }
+
+          rhs = rhs_expr2;
+
+          if (is_index_accessor) {
+              matches(Token::Type::kRBracket);
+              is_index_accessor = false;
+          }
+
+          lookahead = peek(1);
+      }
+
+      auto op_type = ast::BinaryExpr::Type::kCount;
+
+      switch (op->type()) {
+          case Token::Type::kOrEq:
+              op_type = ast::BinaryExpr::Type::kOrEqual;
+              break;
+          case Token::Type::kXorEq:
+              op_type = ast::BinaryExpr::Type::kXorEqual;
+              break;
+          case Token::Type::kAndEq:
+              op_type = ast::BinaryExpr::Type::kAndEqual;
+              break;
+          case Token::Type::kRSEq:
+              op_type = ast::BinaryExpr::Type::kRightShiftEqual;
+              break;
+          case Token::Type::kLSEq:
+              op_type = ast::BinaryExpr::Type::kLeftShiftEqual;
+              break;
+          case Token::Type::kPercentEq:
+              op_type = ast::BinaryExpr::Type::kModulusEqual;
+              break;
+          case Token::Type::kDivideEq:
+              op_type = ast::BinaryExpr::Type::kDivideEqual;
+              break;
+          case Token::Type::kMulEq:
+              op_type = ast::BinaryExpr::Type::kMultiplyEqual;
+              break;
+          case Token::Type::kMinusEq:
+              op_type = ast::BinaryExpr::Type::kSubtractEqual;
+              break;
+          case Token::Type::kPlusEq:
+              op_type = ast::BinaryExpr::Type::kAddEqual;
+              break;
+          case Token::Type::kEqual:
+              op_type = ast::BinaryExpr::Type::kEqual;
+              break;
+          case Token::Type::kOrOr:
+              op_type = ast::BinaryExpr::Type::kOrOr;
+              break;
+          case Token::Type::kAndAnd:
+              op_type = ast::BinaryExpr::Type::kAndAnd;
+              break;
+          case Token::Type::kOr:
+              op_type = ast::BinaryExpr::Type::kBitOr;
+              break;
+          case Token::Type::kXor:
+              op_type = ast::BinaryExpr::Type::kBitXor;
+              break;
+          case Token::Type::kAnd:
+              op_type = ast::BinaryExpr::Type::kBitAnd;
+              break;
+          case Token::Type::kEqEq:
+              op_type = ast::BinaryExpr::Type::kEqualEqual;
+              break;
+          case Token::Type::kNotEq:
+              op_type = ast::BinaryExpr::Type::kNotEqual;
+              break;
+          case Token::Type::kGT:
+              op_type = ast::BinaryExpr::Type::kGreaterThan;
+              break;
+          case Token::Type::kGTEq:
+              op_type = ast::BinaryExpr::Type::kGreaterThanEqual;
+              break;
+          case Token::Type::kLT:
+              op_type = ast::BinaryExpr::Type::kLessThan;
+              break;
+          case Token::Type::kLTEq:
+              op_type = ast::BinaryExpr::Type::kLessThanEqual;
+              break;
+          case Token::Type::kLS:
+              op_type = ast::BinaryExpr::Type::kLeftShift;
+              break;
+          case Token::Type::kRS:
+              op_type = ast::BinaryExpr::Type::kRightShift;
+              break;
+          case Token::Type::kPlus:
+              op_type = ast::BinaryExpr::Type::kAdd;
+              break;
+          case Token::Type::kMinus:
+              op_type = ast::BinaryExpr::Type::kSubtract;
+              break;
+          case Token::Type::kAsterisk:
+              op_type = ast::BinaryExpr::Type::kMultiply;
+              break;
+          case Token::Type::kSlash:
+              op_type = ast::BinaryExpr::Type::kDivide;
+              break;
+          case Token::Type::kPercent:
+              op_type = ast::BinaryExpr::Type::kModulus;
+              break;
+          case Token::Type::kIncrement:
+              op_type = ast::BinaryExpr::Type::kIncrement;
+              break;
+          case Token::Type::kDecrement:
+              op_type = ast::BinaryExpr::Type::kDecrement;
+              break;
+          case Token::Type::kDot:
+              op_type = ast::BinaryExpr::Type::kMemberAccess;
+              break;
+          case Token::Type::kLBracket:
+              op_type = ast::BinaryExpr::Type::kIndexAccessor;
+              break;
+          default:
+              return error("invalid operator.");
+      }
+
+      lhs = ast::context().make<ast::BinaryExpr>(
+          std::move(lhs),
+          op_type,
+          std::move(rhs)
+      );
+    }
+
+    return std::move(lhs);
   }
  
   Result<ast::CRef<ast::Expr>> Parser::parse_expr()

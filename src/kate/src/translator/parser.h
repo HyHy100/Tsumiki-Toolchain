@@ -41,7 +41,7 @@ namespace kate::tlr {
         operator T&&()
         {
           assert(matched);
-          
+
           return std::move(value);
         }
 
@@ -63,6 +63,14 @@ namespace kate::tlr {
         enum class Associativity {
           kLeft, kRight
         };
+
+        void advance(size_t n = 1);
+
+        bool is_operator(const Token& tok);
+
+        bool is_numeric_operator(const Token& tok);
+
+        const Token* peek(size_t n);
 
         int get_precedence(const Token& expr);
 
@@ -97,6 +105,11 @@ namespace kate::tlr {
         Result<std::vector<ast::CRef<ast::Attr>>> parse_attributes();
 
         Result<std::vector<ast::CRef<ast::Expr>>> parse_expression_list();
+
+        Result<ast::CRef<ast::Expr>> parse_expression_1(
+          ast::CRef<ast::Expr>& lhs,
+          size_t min_precendence
+        );
 
         Result<ast::CRef<ast::Expr>> parse_expr();
 
