@@ -123,7 +123,7 @@ namespace kate::tlr {
 
         Result<std::string> parse_name();
 
-        Failure error(const std::string_view& message);
+        Failure error(const std::string& message);
 
         ParserOptions m_options;
 

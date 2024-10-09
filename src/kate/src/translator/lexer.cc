@@ -137,13 +137,11 @@ namespace kate::tlr {
           auto [_, ec] = std::from_chars(number.data(), number.data() + number.length(), value, 16);
         
           if (ec != std::errc()) {
-            if (ec == std::errc::invalid_argument) {
+            if (ec == std::errc::invalid_argument)
               show_error_and_die("Failed to parse hexadecimal integer. Not a number.");
-            } else if (ec == std::errc::result_out_of_range) {
+            else if (ec == std::errc::result_out_of_range)
               show_error_and_die("Failed to parse hexadecimal integer. Number is larger than an i64.");
-            } else {
-              show_error_and_die("Failed to parse hexadecimal integer.");
-            }
+            else show_error_and_die("Failed to parse hexadecimal integer.");
           }
         } else {
           while (is_number(peek(0))) {

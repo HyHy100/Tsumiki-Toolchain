@@ -572,6 +572,8 @@ namespace kate::tlr {
         type = ast::Attr::Type::kGroup;
       else if (ident.value == "binding")
         type = ast::Attr::Type::kBinding;
+      else 
+        return error(fmt::format("unknown attribute '{}'.", ident.value));
 
       Result<std::vector<ast::CRef<ast::Expr>>> expr_list;
       
@@ -718,7 +720,7 @@ namespace kate::tlr {
   }
 
   Failure Parser::error(
-      const std::string_view& message
+      const std::string& message
   )
   {
     if (m_options.error_callback) {
