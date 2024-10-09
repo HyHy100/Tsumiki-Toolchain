@@ -107,7 +107,7 @@ namespace kate::tlr {
         Result<std::vector<ast::CRef<ast::Expr>>> parse_expression_list();
 
         Result<ast::CRef<ast::Expr>> parse_expression_1(
-          ast::CRef<ast::Expr>& lhs,
+          ast::CRef<ast::Expr>&& lhs,
           size_t min_precendence
         );
 

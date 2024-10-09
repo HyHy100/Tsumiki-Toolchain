@@ -17,8 +17,6 @@ namespace kate::tlr {
     std::vector<ast::CRef<ast::Decl>> global_decls;
 
     while (should_continue()) {
-      fmt::println("processing....");
-
       auto decl = parse_global_declaration();
 
       if (!decl.matched) return {};
@@ -142,7 +140,8 @@ namespace kate::tlr {
         statements.push_back(std::move(stat.value));
       }
 
-      if (!current()->is(Token::Type::kRBrace)) return error("missing '}' after end of statement block.");
+      if (!current()->is(Token::Type::kRBrace)) 
+        return error("missing '}' after end of statement block.");
 
       return ast::context().make<ast::BlockStat>(std::move(statements));
     }
@@ -224,7 +223,8 @@ namespace kate::tlr {
 
       if (expr.errored) return Failure::kError;
 
-      if (!expr.matched) return error("missing expression after unary '-'.");
+      if (!expr.matched) 
+        return error("missing expression after unary '-'.");
       
       return ast::context().make<ast::UnaryExpr>(
         ast::UnaryExpr::Type::kMinus,
@@ -235,7 +235,8 @@ namespace kate::tlr {
 
       if (expr.errored) return Failure::kError;
 
-      if (!expr.matched) return error("missing expression after unary '+'.");
+      if (!expr.matched) 
+        return error("missing expression after unary '+'.");
     
       return ast::context().make<ast::UnaryExpr>(
         ast::UnaryExpr::Type::kPlus,
@@ -246,7 +247,8 @@ namespace kate::tlr {
 
       if (expr.errored) return Failure::kError;
 
-      if (!expr.matched) return error("missing expression after unary '!'.");
+      if (!expr.matched) 
+        return error("missing expression after unary '!'.");
       
       return ast::context().make<ast::UnaryExpr>(
         ast::UnaryExpr::Type::kNot,
@@ -257,7 +259,8 @@ namespace kate::tlr {
 
       if (expr.errored) return Failure::kError;
 
-      if (!expr.matched) return error("missing expression after unary '~'.");
+      if (!expr.matched) 
+        return error("missing expression after unary '~'.");
       
       return ast::context().make<ast::UnaryExpr>(
         ast::UnaryExpr::Type::kFlip,
@@ -357,7 +360,7 @@ namespace kate::tlr {
   }
 
   Result<ast::CRef<ast::Expr>> Parser::parse_expression_1(
-    ast::CRef<ast::Expr>& lhs,
+    ast::CRef<ast::Expr>&& lhs,
     size_t min_precendence
   )
   {
@@ -375,11 +378,8 @@ namespace kate::tlr {
 
       auto rhs_expr = primary_expr();
 
-      if (rhs_expr.errored || !rhs_expr.matched) {
-          error("error while parsing expression.");
-          
-          return Failure::kError;
-      }
+      if (rhs_expr.errored || !rhs_expr.matched)
+          return error("error while parsing expression.");
 
       auto rhs = rhs_expr.unwrap();
 
@@ -399,15 +399,12 @@ namespace kate::tlr {
               is_index_accessor = true;
 
           auto rhs_expr2 = parse_expression_1(
-              rhs,
+              std::move(rhs),
               get_precedence(*op) + ((get_precedence(*lookahead) > get_precedence(*op)) ? 1 : 0)
           );
 
-          if (rhs_expr2.errored || !rhs_expr2.matched) {
-              error("error while parsing expression.");
-              
-              return Failure::kError;
-          }
+          if (rhs_expr2.errored || !rhs_expr2.matched)
+              return error("error while parsing expression.");
 
           rhs = rhs_expr2;
 
@@ -422,107 +419,107 @@ namespace kate::tlr {
       auto op_type = ast::BinaryExpr::Type::kCount;
 
       switch (op->type()) {
-          case Token::Type::kOrEq:
-              op_type = ast::BinaryExpr::Type::kOrEqual;
-              break;
-          case Token::Type::kXorEq:
-              op_type = ast::BinaryExpr::Type::kXorEqual;
-              break;
-          case Token::Type::kAndEq:
-              op_type = ast::BinaryExpr::Type::kAndEqual;
-              break;
-          case Token::Type::kRSEq:
-              op_type = ast::BinaryExpr::Type::kRightShiftEqual;
-              break;
-          case Token::Type::kLSEq:
-              op_type = ast::BinaryExpr::Type::kLeftShiftEqual;
-              break;
-          case Token::Type::kPercentEq:
-              op_type = ast::BinaryExpr::Type::kModulusEqual;
-              break;
-          case Token::Type::kDivideEq:
-              op_type = ast::BinaryExpr::Type::kDivideEqual;
-              break;
-          case Token::Type::kMulEq:
-              op_type = ast::BinaryExpr::Type::kMultiplyEqual;
-              break;
-          case Token::Type::kMinusEq:
-              op_type = ast::BinaryExpr::Type::kSubtractEqual;
-              break;
-          case Token::Type::kPlusEq:
-              op_type = ast::BinaryExpr::Type::kAddEqual;
-              break;
-          case Token::Type::kEqual:
-              op_type = ast::BinaryExpr::Type::kEqual;
-              break;
-          case Token::Type::kOrOr:
-              op_type = ast::BinaryExpr::Type::kOrOr;
-              break;
-          case Token::Type::kAndAnd:
-              op_type = ast::BinaryExpr::Type::kAndAnd;
-              break;
-          case Token::Type::kOr:
-              op_type = ast::BinaryExpr::Type::kBitOr;
-              break;
-          case Token::Type::kXor:
-              op_type = ast::BinaryExpr::Type::kBitXor;
-              break;
-          case Token::Type::kAnd:
-              op_type = ast::BinaryExpr::Type::kBitAnd;
-              break;
-          case Token::Type::kEqEq:
-              op_type = ast::BinaryExpr::Type::kEqualEqual;
-              break;
-          case Token::Type::kNotEq:
-              op_type = ast::BinaryExpr::Type::kNotEqual;
-              break;
-          case Token::Type::kGT:
-              op_type = ast::BinaryExpr::Type::kGreaterThan;
-              break;
-          case Token::Type::kGTEq:
-              op_type = ast::BinaryExpr::Type::kGreaterThanEqual;
-              break;
-          case Token::Type::kLT:
-              op_type = ast::BinaryExpr::Type::kLessThan;
-              break;
-          case Token::Type::kLTEq:
-              op_type = ast::BinaryExpr::Type::kLessThanEqual;
-              break;
-          case Token::Type::kLS:
-              op_type = ast::BinaryExpr::Type::kLeftShift;
-              break;
-          case Token::Type::kRS:
-              op_type = ast::BinaryExpr::Type::kRightShift;
-              break;
-          case Token::Type::kPlus:
-              op_type = ast::BinaryExpr::Type::kAdd;
-              break;
-          case Token::Type::kMinus:
-              op_type = ast::BinaryExpr::Type::kSubtract;
-              break;
-          case Token::Type::kAsterisk:
-              op_type = ast::BinaryExpr::Type::kMultiply;
-              break;
-          case Token::Type::kSlash:
-              op_type = ast::BinaryExpr::Type::kDivide;
-              break;
-          case Token::Type::kPercent:
-              op_type = ast::BinaryExpr::Type::kModulus;
-              break;
-          case Token::Type::kIncrement:
-              op_type = ast::BinaryExpr::Type::kIncrement;
-              break;
-          case Token::Type::kDecrement:
-              op_type = ast::BinaryExpr::Type::kDecrement;
-              break;
-          case Token::Type::kDot:
-              op_type = ast::BinaryExpr::Type::kMemberAccess;
-              break;
-          case Token::Type::kLBracket:
-              op_type = ast::BinaryExpr::Type::kIndexAccessor;
-              break;
-          default:
-              return error("invalid operator.");
+        case Token::Type::kOrEq:
+          op_type = ast::BinaryExpr::Type::kOrEqual;
+          break;
+        case Token::Type::kXorEq:
+          op_type = ast::BinaryExpr::Type::kXorEqual;
+          break;
+        case Token::Type::kAndEq:
+          op_type = ast::BinaryExpr::Type::kAndEqual;
+          break;
+        case Token::Type::kRSEq:
+          op_type = ast::BinaryExpr::Type::kRightShiftEqual;
+          break;
+        case Token::Type::kLSEq:
+          op_type = ast::BinaryExpr::Type::kLeftShiftEqual;
+          break;
+        case Token::Type::kPercentEq:
+          op_type = ast::BinaryExpr::Type::kModulusEqual;
+          break;
+        case Token::Type::kDivideEq:
+          op_type = ast::BinaryExpr::Type::kDivideEqual;
+          break;
+        case Token::Type::kMulEq:
+          op_type = ast::BinaryExpr::Type::kMultiplyEqual;
+          break;
+        case Token::Type::kMinusEq:
+          op_type = ast::BinaryExpr::Type::kSubtractEqual;
+          break;
+        case Token::Type::kPlusEq:
+          op_type = ast::BinaryExpr::Type::kAddEqual;
+          break;
+        case Token::Type::kEqual:
+          op_type = ast::BinaryExpr::Type::kEqual;
+          break;
+        case Token::Type::kOrOr:
+          op_type = ast::BinaryExpr::Type::kOrOr;
+          break;
+        case Token::Type::kAndAnd:
+          op_type = ast::BinaryExpr::Type::kAndAnd;
+          break;
+        case Token::Type::kOr:
+          op_type = ast::BinaryExpr::Type::kBitOr;
+          break;
+        case Token::Type::kXor:
+          op_type = ast::BinaryExpr::Type::kBitXor;
+          break;
+        case Token::Type::kAnd:
+          op_type = ast::BinaryExpr::Type::kBitAnd;
+          break;
+        case Token::Type::kEqEq:
+          op_type = ast::BinaryExpr::Type::kEqualEqual;
+          break;
+        case Token::Type::kNotEq:
+          op_type = ast::BinaryExpr::Type::kNotEqual;
+          break;
+        case Token::Type::kGT:
+          op_type = ast::BinaryExpr::Type::kGreaterThan;
+          break;
+        case Token::Type::kGTEq:
+          op_type = ast::BinaryExpr::Type::kGreaterThanEqual;
+          break;
+        case Token::Type::kLT:
+          op_type = ast::BinaryExpr::Type::kLessThan;
+          break;
+        case Token::Type::kLTEq:
+          op_type = ast::BinaryExpr::Type::kLessThanEqual;
+          break;
+        case Token::Type::kLS:
+          op_type = ast::BinaryExpr::Type::kLeftShift;
+          break;
+        case Token::Type::kRS:
+          op_type = ast::BinaryExpr::Type::kRightShift;
+          break;
+        case Token::Type::kPlus:
+          op_type = ast::BinaryExpr::Type::kAdd;
+          break;
+        case Token::Type::kMinus:
+          op_type = ast::BinaryExpr::Type::kSubtract;
+          break;
+        case Token::Type::kAsterisk:
+          op_type = ast::BinaryExpr::Type::kMultiply;
+          break;
+        case Token::Type::kSlash:
+          op_type = ast::BinaryExpr::Type::kDivide;
+          break;
+        case Token::Type::kPercent:
+          op_type = ast::BinaryExpr::Type::kModulus;
+          break;
+        case Token::Type::kIncrement:
+          op_type = ast::BinaryExpr::Type::kIncrement;
+          break;
+        case Token::Type::kDecrement:
+          op_type = ast::BinaryExpr::Type::kDecrement;
+          break;
+        case Token::Type::kDot:
+          op_type = ast::BinaryExpr::Type::kMemberAccess;
+          break;
+        case Token::Type::kLBracket:
+          op_type = ast::BinaryExpr::Type::kIndexAccessor;
+          break;
+        default:
+          return error("invalid operator.");
       }
 
       lhs = ast::context().make<ast::BinaryExpr>(
@@ -537,7 +534,17 @@ namespace kate::tlr {
  
   Result<ast::CRef<ast::Expr>> Parser::parse_expr()
   {
-    return primary_expr(); 
+    auto expr = primary_expr();
+
+    if (expr.matched) {
+        auto next = peek(1);
+
+        if (next && is_operator(*next)) {
+            expr = parse_expression_1(std::move(expr.value), 0u);
+        }
+    }
+
+    return expr; 
   }
 
   Result<std::vector<ast::CRef<ast::Attr>>> Parser::parse_attributes()
@@ -548,7 +555,8 @@ namespace kate::tlr {
     while (matches(Token::Type::kAt)) {
       auto ident = parse_name();
 
-      if (!ident.matched) return error("missing attribute identifier after '@'.");
+      if (!ident.matched) 
+        return error("missing attribute identifier after '@'.");
 
       auto type = ast::Attr::Type::kCount;
 
@@ -608,15 +616,19 @@ namespace kate::tlr {
 
       auto name = parse_name();
 
-      if (!name.matched) return error("missing name in buffer declaration.");
+      if (!name.matched) 
+        return error("missing name in buffer declaration.");
 
-      if (!matches(Token::Type::kColon)) return error("missing ':' after buffer name.");
+      if (!matches(Token::Type::kColon)) 
+        return error("missing ':' after buffer name.");
 
       auto type_ident = parse_name();
 
-      if (!type_ident.matched) return error("missing type in buffer declaration.");
+      if (!type_ident.matched) 
+        return error("missing type in buffer declaration.");
 
-      if (!matches(Token::Type::kSemicolon)) return error("missing semicolon after buffer declaration.");
+      if (!matches(Token::Type::kSemicolon)) 
+        return error("missing semicolon after buffer declaration.");
 
       return ast::context().make<ast::BufferDecl>(
         name,
@@ -646,7 +658,8 @@ namespace kate::tlr {
       while (should_continue() && !matches(Token::Type::kRightParen)) {
         auto ident = parse_name();
 
-        if (!ident.matched) return error("missing argument identifier.");
+        if (!ident.matched) 
+          return error("missing argument identifier.");
 
         if (!matches(Token::Type::kColon))
           return error("missing ':' after function argument name.");
@@ -669,9 +682,11 @@ namespace kate::tlr {
 
       auto block = parse_block();
 
-      if (block.errored) return Failure::kError;
+      if (block.errored) 
+        return Failure::kError;
 
-      if (!block.matched) return error("missing block in function declaration.");
+      if (!block.matched) 
+        return error("missing block in function declaration.");
 
       return ast::context().make<ast::FuncDecl>(
         function_name,
@@ -696,7 +711,8 @@ namespace kate::tlr {
     // TODO: Support type arguments.
     auto ident = matches(Token::Type::kIdent);
 
-    if (!ident) return error("expected type identifier.");
+    if (!ident) 
+      return error("expected type identifier.");
 
     return ast::context().make<ast::Type>(std::string(std::get<std::string_view>(ident->value())));
   }
