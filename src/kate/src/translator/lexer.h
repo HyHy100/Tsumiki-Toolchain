@@ -43,11 +43,12 @@ namespace kate::tlr {
       kEqEq,      // ==
       kNotEq,     // !=
       kAndAnd,    // &&
+      kExclamation,// !
       kOrOr,      // ||
       kPlus,      // +
       kMinus,     // -
       kAsterisk,  // *
-      kSlash,     //
+      kSlash,     // /
       kPercent,   // %
       kGTEq,      // >=
       kLTEq,      // <=

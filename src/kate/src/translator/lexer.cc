@@ -493,6 +493,14 @@ namespace kate::tlr {
             advance();
           }
           break;
+        case '!':
+          m_tokens.push_back(Token {
+            Token::Type::kExclamation,
+            std::string_view { &source[offset], 1 },
+            loc
+          });
+          advance();
+          break;
         case ')':
           m_tokens.push_back(Token {
             Token::Type::kRightParen,

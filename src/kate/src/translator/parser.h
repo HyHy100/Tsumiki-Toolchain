@@ -38,6 +38,13 @@ namespace kate::tlr {
 
         bool ok();
 
+        operator T&&()
+        {
+          assert(matched);
+          
+          return std::move(value);
+        }
+
         bool errored;
         bool matched;
         T value;
@@ -94,6 +101,8 @@ namespace kate::tlr {
         Result<ast::CRef<ast::Expr>> parse_expr();
 
         Result<ast::CRef<ast::Expr>> primary_expr();
+
+        Result<ast::CRef<ast::UnaryExpr>> unary_expr();
 
         Result<ast::CRef<ast::IdExpr>> identifier_expr();
 

@@ -58,6 +58,27 @@ namespace kate::tlr::ast {
     return m_ident;
   }
 
+  UnaryExpr::UnaryExpr(
+    UnaryExpr::Type type,
+    CRef<Expr> operand
+  ) : m_type { type },
+      m_operand { std::move(operand) }
+  {
+  }
+
+  CRef<TreeNode> UnaryExpr::clone()
+  {
+    context().make<UnaryExpr>(
+      m_type,
+      context().clone(m_operand)
+    );
+  }
+
+  CRef<Expr>& UnaryExpr::operand()
+  {
+    return m_operand;
+  }
+
   BinaryExpr::BinaryExpr(
     BinaryExpr::Type type,
     CRef<Expr>&& lhs,
@@ -475,6 +496,7 @@ TS_RTTI_TYPE(ast::Expr)
 TS_RTTI_TYPE(ast::LitExpr)
 TS_RTTI_TYPE(ast::IdExpr)
 TS_RTTI_TYPE(ast::BinaryExpr)
+TS_RTTI_TYPE(ast::UnaryExpr)
 TS_RTTI_TYPE(ast::FuncArg)
 TS_RTTI_TYPE(ast::FuncDecl)
 TS_RTTI_TYPE(ast::StructMember)

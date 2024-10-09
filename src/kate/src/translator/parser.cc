@@ -25,7 +25,7 @@ namespace kate::tlr {
 
       fmt::println("Adding new global declaration: {}", decl.value->name());
 
-      global_decls.push_back(std::move(decl.value));
+      global_decls.push_back(decl);
     }
 
     return ast::context().make<ast::Module>(std::move(global_decls));
@@ -96,7 +96,6 @@ namespace kate::tlr {
         }
 
     assert(false);
-    //unreachable();
   }
 
   Parser::Associativity Parser::get_associativity(const Token& tk) {
@@ -115,7 +114,6 @@ namespace kate::tlr {
       }
 
       assert(false);
-      //unreachable();
   }
 
   Result<ast::CRef<ast::Stat>> Parser::statement()
@@ -151,7 +149,7 @@ namespace kate::tlr {
     if (!expr.matched) return Failure::kNoMatch;
 
     std::vector<ast::CRef<ast::Expr>> expr_list;
-    expr_list.push_back(std::move(expr.value));
+    expr_list.push_back(expr);
 
     while (matches(Token::Type::kComma)) {
       expr = parse_expr();
@@ -159,7 +157,7 @@ namespace kate::tlr {
       if (!expr.matched)
         return error("missing a expression after ',' while parsing a expression list.");
 
-      expr_list.push_back(std::move(expr.value));
+      expr_list.push_back(expr);
     }
 
     return expr_list;
@@ -211,8 +209,54 @@ namespace kate::tlr {
     return Failure::kNoMatch;
   }
 
+  Result<ast::CRef<ast::UnaryExpr>> Parser::unary_expr()
+  {
+    if (matches(Token::Type::kMinus)) {
+      auto expr = primary_expr();
+
+      if (expr.errored) return Failure::kError;
+
+      if (!expr.matched) return error("missing expression after unary '-'.");
+      
+      return ast::context().make<ast::UnaryExpr>(
+        ast::UnaryExpr::Type::kMinus,
+        std::move(expr)
+      );
+    } else if (matches(Token::Type::kPlus)) {
+      auto expr = primary_expr();
+
+      if (expr.errored) return Failure::kError;
+
+      if (!expr.matched) return error("missing expression after unary '-'.");
+    
+      return ast::context().make<ast::UnaryExpr>(
+        ast::UnaryExpr::Type::kPlus,
+        std::move(expr)
+      );
+    } else if (matches(Token::Type::kExclamation)) {
+      auto expr = primary_expr();
+
+      if (expr.errored) return Failure::kError;
+
+      if (!expr.matched) return error("missing expression after unary '-'.");
+      
+      return ast::context().make<ast::UnaryExpr>(
+        ast::UnaryExpr::Type::kNot,
+        std::move(expr)
+      );
+    }
+
+    return Failure::kNoMatch;
+  }
+
   Result<ast::CRef<ast::Expr>> Parser::primary_expr()
   {
+    auto unary_expr_ = unary_expr();
+
+    if (unary_expr_.matched) return unary_expr_;
+
+    if (unary_expr_.errored) return Failure::kError;
+
     auto litexpr = literal_expr();
     
     if (litexpr.matched) return litexpr;
@@ -282,7 +326,7 @@ namespace kate::tlr {
       attribute_list.push_back(
         ast::context().make<ast::Attr>(
           type,
-          std::move(expr_list.value)
+          expr_list
         )
       );
     }
@@ -322,9 +366,9 @@ namespace kate::tlr {
       if (!matches(Token::Type::kSemicolon)) return error("missing semicolon after buffer declaration.");
 
       return ast::context().make<ast::BufferDecl>(
-        name.value,
+        name,
         std::move(expr_list),
-        ast::context().make<ast::Type>(type_ident.value)
+        ast::context().make<ast::Type>(type_ident)
       );
     }
 
@@ -361,8 +405,8 @@ namespace kate::tlr {
         // (Renan): if we are here, then we have a valid argument.
         function_args.push_back(
           ast::context().make<ast::FuncArg>(
-            ident.value,
-            std::move(type.value)
+            ident,
+            type
           )
         );
       }
@@ -377,8 +421,8 @@ namespace kate::tlr {
       if (!block.matched) return error("missing block in function declaration.");
 
       return ast::context().make<ast::FuncDecl>(
-        function_name.value,
-        std::move(block.value),
+        function_name,
+        block,
         std::move(function_args)
       );
     }

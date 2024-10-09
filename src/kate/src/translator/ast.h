@@ -306,6 +306,27 @@ namespace kate::tlr::ast {
     uint64_t m_value;
   };
 
+  class UnaryExpr final : public base::rtti::Castable<UnaryExpr, Expr> {
+  public:
+    enum class Type {
+      kMinus,
+      kPlus,
+      kNot
+    };
+
+    UnaryExpr(
+      Type type,
+      CRef<Expr> operand
+    );
+
+    CRef<TreeNode> clone() override;
+
+    CRef<Expr>& operand();
+  private:
+    Type m_type;
+    CRef<Expr> m_operand;
+  };
+
   class BinaryExpr final : public base::rtti::Castable<BinaryExpr, Expr> {
   public:
     enum class Type {
