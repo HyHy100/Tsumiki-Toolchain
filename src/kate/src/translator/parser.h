@@ -110,6 +110,10 @@ namespace kate::tlr {
 
         Result<ast::CRef<ast::WhileStat>> while_statement();
 
+        Result<ast::CRef<ast::StructDecl>> struct_declaration();
+
+        Result<std::vector<ast::CRef<ast::StructMember>>> struct_members();
+
         Result<ast::CRef<ast::BlockStat>> parse_block();
 
         Result<std::vector<ast::CRef<ast::Attr>>> parse_attributes();
@@ -138,6 +142,8 @@ namespace kate::tlr {
         Failure error(const std::string& message);
 
         ParserOptions m_options;
+
+      std::vector<ast::CRef<ast::Decl>> m_global_decls;
 
         Lexer m_lexer;
 

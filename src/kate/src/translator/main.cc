@@ -15,6 +15,11 @@ namespace kate::tlr {
     parser.parse(R"(@group(0) @binding(0) 
 buffer<read> buffer1: f32;
 
+buffer<read> buffer2: {
+  a: f32,
+  b: f32
+};
+
 @compute
 fn main() {
   if buffer1[55] + 9 + 7 + 9 + 5 > 12 {

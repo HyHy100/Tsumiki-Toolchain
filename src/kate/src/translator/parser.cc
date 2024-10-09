@@ -14,8 +14,6 @@ namespace kate::tlr {
   {
     m_lexer.tokenize(source);
 
-    std::vector<ast::CRef<ast::Decl>> global_decls;
-
     while (should_continue()) {
       auto decl = parse_global_declaration();
 
@@ -23,10 +21,10 @@ namespace kate::tlr {
 
       fmt::println("Adding new global declaration: {}", decl.value->name());
 
-      global_decls.push_back(decl);
+      m_global_decls.push_back(decl);
     }
 
-    return ast::context().make<ast::Module>(std::move(global_decls));
+    return ast::context().make<ast::Module>(std::move(m_global_decls));
   }
 
   Result<ast::CRef<ast::Decl>> Parser::parse_global_declaration()
@@ -38,6 +36,9 @@ namespace kate::tlr {
 
     if (auto buffer = parse_buffer_decl(attrs.value); buffer.matched)
       return buffer;
+
+    if (auto struct_ = struct_declaration(); struct_.matched)
+      return struct_;
 
     // if all global declarations failed, then
     // synchronize to the next '}' and fail.
@@ -240,6 +241,78 @@ namespace kate::tlr {
       std::string(identifier->value_as<std::string_view>()),
       std::move(expr_list)
     );
+  }
+
+  Result<ast::CRef<ast::StructDecl>> Parser::struct_declaration()
+  {
+    if (matches("struct")) {
+      auto name = parse_name();
+
+      if (name.errored) return Failure::kError;
+
+      if (!name.matched) return error("missing name when declaring struct.");
+
+      auto members = struct_members();
+
+      if (members.errored) return Failure::kError;
+
+      if (!members.matched) return error("missing struct body, KSL does not support forward declarations.");
+
+      matches(Token::Type::kSemicolon);
+
+      return ast::context().make<ast::StructDecl>(
+        name.value,
+        std::move(members.value)
+      );
+    }
+
+    return Failure::kError;
+  }
+
+  Result<std::vector<ast::CRef<ast::StructMember>>> Parser::struct_members()
+  {
+    if (matches(Token::Type::kLBrace)) {
+      std::vector<ast::CRef<ast::StructMember>> members;
+
+      size_t i = 0;
+
+      while (should_continue() && !matches(Token::Type::kRBrace)) {
+        if (i++ > 0 && !matches(Token::Type::kComma))
+          return error("missing ',' while declaring struct members.");
+
+        auto attrs = parse_attributes();
+
+        if (attrs.errored) return Failure::kError;
+
+        auto name = parse_name();
+
+        if (name.errored) return Failure::kError;
+
+        if (!name.matched) 
+          return error("missing name in struct member.");
+
+        if (!matches(Token::Type::kColon)) 
+          return error("missing ':' after name in struct member.");
+
+        auto type = expect_type();
+
+        if (type.errored) return Failure::kError;
+
+        if (!type.matched) return error("missing type after ':' in struct member.");
+        
+        members.push_back(
+          ast::context().make<ast::StructMember>(
+            std::move(type.value),
+            name.value,
+            std::move(attrs.value)
+          )
+        );
+      }
+
+      return std::move(members);
+    }
+
+    return Failure::kNoMatch;
   }
 
   Result<ast::CRef<ast::VarStat>> Parser::var_statement()
@@ -883,9 +956,11 @@ namespace kate::tlr {
       if (!matches(Token::Type::kColon)) 
         return error("missing ':' after buffer name.");
 
-      auto type_ident = parse_name();
+      auto type = expect_type();
 
-      if (!type_ident.matched) 
+      if (type.errored) return Failure::kError;
+
+      if (!type.matched) 
         return error("missing type in buffer declaration.");
 
       if (!matches(Token::Type::kSemicolon)) 
@@ -894,7 +969,7 @@ namespace kate::tlr {
       return ast::context().make<ast::BufferDecl>(
         name,
         args,
-        ast::context().make<ast::Type>(type_ident)
+        std::move(type)
       );
     }
 
@@ -969,13 +1044,32 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::Type>> Parser::expect_type()
   {
-    // TODO: Support type arguments.
-    auto ident = matches(Token::Type::kIdent);
+    auto struct_members_ = struct_members();
 
-    if (!ident) 
-      return error("expected type identifier.");
+    if (struct_members_.errored) return Failure::kError;
 
-    return ast::context().make<ast::Type>(std::string(std::get<std::string_view>(ident->value())));
+    if (struct_members_.matched) {
+      static size_t n = 0;
+
+      auto struct_name = fmt::format("priv_{}", ++n);
+
+      m_global_decls.push_back(
+        ast::context().make<ast::StructDecl>(
+          struct_name,
+          std::move(struct_members_.value)
+        )
+      );
+
+      return ast::context().make<ast::Type>(struct_name);
+    }
+
+    auto ident = parse_name();
+
+    if (ident.errored) return Failure::kError;
+
+    if (!ident.matched) return error("expected type identifier.");
+
+    return ast::context().make<ast::Type>(ident.value);
   }
 
   Failure Parser::error(
