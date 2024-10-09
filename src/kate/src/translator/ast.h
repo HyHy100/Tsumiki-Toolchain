@@ -621,6 +621,36 @@ namespace kate::tlr::ast {
     CRef<BlockStat> m_block;
   };
 
+  class CallExpr final : public base::rtti::Castable<CallExpr, Stat> {
+  public:
+    CallExpr(
+      const std::string& identifier,
+      std::vector<CRef<Expr>> args
+    );
+
+    CRef<TreeNode> clone() override;
+
+    const std::string& identifier() const;
+
+    std::vector<CRef<Expr>>& args();
+  private:
+    std::string m_identifier;
+    std::vector<CRef<Expr>> m_args;
+  };
+
+  class CallStat final : public base::rtti::Castable<CallStat, Stat> {
+  public:
+    CallStat(
+      CRef<CallExpr>&& call_expr
+    );
+
+    CRef<TreeNode> clone() override;
+
+    CRef<CallExpr>& expr();
+  private:
+    CRef<CallExpr> m_call_expr;
+  };
+
   class WhileStat final : public base::rtti::Castable<WhileStat, Stat> {
   public:
     WhileStat(CRef<Expr>&& condition, CRef<BlockStat>&& block);

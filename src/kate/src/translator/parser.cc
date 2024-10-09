@@ -220,6 +220,39 @@ namespace kate::tlr {
     return Failure::kNoMatch;
   }
 
+  Result<ast::CRef<ast::CallExpr>> Parser::call_expr()
+  {
+    if (!peek(1)->is(Token::Type::kIdent) || !peek(2)->is(Token::Type::kLeftParen))
+      return Failure::kNoMatch;
+
+    auto identifier = matches(Token::Type::kIdent); 
+    
+    matches(Token::Type::kLeftParen);
+
+    auto expr_list = parse_expression_list();
+
+    if (expr_list.errored) return Failure::kError;
+
+    if (!matches(Token::Type::kRightParen))
+      return error("missing ')' after function call argument list.");
+  
+    return ast::context().make<ast::CallExpr>(
+      std::string(identifier->value_as<std::string_view>()),
+      std::move(expr_list)
+    );
+  }
+ 
+  Result<ast::CRef<ast::CallStat>> Parser::call_statement()
+  {
+    auto call_expr_ = call_expr();
+
+    if (call_expr_.errored) return Failure::kError;
+
+    if (call_expr_.matched) return call_expr_;
+
+    return Failure::kNoMatch;
+  }
+
   Result<ast::CRef<ast::IfStat>> Parser::if_statement()
   {
     if (matches("if")) {
@@ -280,6 +313,12 @@ namespace kate::tlr {
 
     // try a while statement.
     stat = while_statement();
+
+    if (stat.errored) return Failure::kError;
+
+    if (stat.matched) return std::move(stat);
+
+    stat = call_statement();
 
     if (stat.errored) return Failure::kError;
 
@@ -457,6 +496,12 @@ namespace kate::tlr {
     if (litexpr.matched) return litexpr;
 
     if (litexpr.errored) return Failure::kError;
+
+    auto call_expr_ = call_expr();
+
+    if (call_expr_.matched) return call_expr_;
+
+    if (call_expr_.errored) return Failure::kError;
 
     auto idexpr = identifier_expr(); 
     

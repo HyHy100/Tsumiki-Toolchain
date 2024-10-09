@@ -100,6 +100,10 @@ namespace kate::tlr {
 
         Result<ast::CRef<ast::Stat>> statement();
 
+        Result<ast::CRef<ast::CallExpr>> call_expr();
+
+        Result<ast::CRef<ast::CallStat>> call_statement();
+
         Result<ast::CRef<ast::IfStat>> if_statement();
 
         Result<ast::CRef<ast::ForStat>> for_statement();

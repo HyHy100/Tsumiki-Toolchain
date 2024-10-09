@@ -367,6 +367,50 @@ namespace kate::tlr::ast {
     return m_elseBlock;
   }
 
+  CallExpr::CallExpr(
+    const std::string& identifier,
+    std::vector<CRef<Expr>> args
+  ) : m_identifier{ identifier },
+    m_args { std::move(args) }
+  {
+  }
+
+  CRef<TreeNode> CallExpr::clone()
+  {
+    return ast::context().make<ast::CallExpr>(
+      m_identifier,
+      ast::context().clone(m_args)
+    );
+  }
+
+  const std::string& CallExpr::identifier() const
+  {
+    return m_identifier;
+  }
+
+  std::vector<CRef<Expr>>& CallExpr::args()
+  {
+    return m_args;
+  }
+
+  CallStat::CallStat(
+    CRef<CallExpr>&& call_expr
+  ) : m_call_expr { std::move(call_expr) }
+  {
+  }
+
+  CRef<TreeNode> CallStat::clone()
+  {
+    return context().make<CallStat>(
+      context().clone(m_call_expr)
+    );
+  }
+
+  CRef<CallExpr>& CallStat::expr()
+  {
+    return m_call_expr;
+  }
+
   ForStat::ForStat(
     CRef<ExprStat>&& initializer,
     CRef<Expr>&& condition,
@@ -519,3 +563,5 @@ TS_RTTI_TYPE(ast::VarStat)
 TS_RTTI_TYPE(ast::Module)
 TS_RTTI_TYPE(ast::Type)
 TS_RTTI_TYPE(ast::BufferDecl)
+TS_RTTI_TYPE(ast::CallExpr)
+TS_RTTI_TYPE(ast::CallStat)
