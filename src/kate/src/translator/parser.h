@@ -114,7 +114,7 @@ namespace kate::tlr {
 
         Result<ast::CRef<ast::Expr>> parse_expression_1(
           ast::CRef<ast::Expr>&& lhs,
-          size_t min_precendence
+          size_t min_precedence
         );
 
         Result<ast::CRef<ast::ExprStat>> parse_expr_stat();

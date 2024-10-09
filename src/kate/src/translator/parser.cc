@@ -521,14 +521,14 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::Expr>> Parser::parse_expression_1(
     ast::CRef<ast::Expr>&& lhs,
-    size_t min_precendence
+    size_t min_precedence
   )
   {
     auto* lookahead = peek(1);
 
     if (!lookahead) return std::move(lhs);
 
-    while (lookahead && is_operator(*lookahead) && get_precedence(*lookahead) >= min_precendence) {
+    while (lookahead && is_operator(*lookahead) && get_precedence(*lookahead) >= min_precedence) {
       auto op = lookahead;
 
       bool is_index_accessor = false;
