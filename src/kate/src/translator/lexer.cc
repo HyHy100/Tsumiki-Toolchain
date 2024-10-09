@@ -55,8 +55,7 @@ namespace kate::tlr {
       if (tok == '\n') {
         loc.line++;
         loc.column = 0;
-      } else 
-        loc.column++;
+      } else loc.column++;
 
       return tok;
     };

@@ -130,6 +130,9 @@ namespace kate::tlr {
 
     if (!expr.matched) return Failure::kNoMatch;
 
+    if (!matches(Token::Type::kSemicolon)) 
+      return error("missing ';' after expression statement.");
+
     return ast::context().make<ast::ExprStat>(std::move(expr));
   }
 
@@ -259,32 +262,39 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::Stat>> Parser::statement()
   {
-    Result<ast::CRef<ast::Stat>> stat = parse_expr_stat();
+    Result<ast::CRef<ast::Stat>> stat;
+
+    // try a if statement.
+    stat = if_statement();
 
     if (stat.errored) return Failure::kError;
 
-    // try a for statement.
-    if (!stat.matched) {
-      stat = for_statement();
+    if (stat.matched) return std::move(stat);
 
-      if (stat.errored) return Failure::kError;
-    }
+    // try a for statement.
+    stat = for_statement();
+
+    if (stat.errored) return Failure::kError;
+
+    if (stat.matched) return std::move(stat);
 
     // try a while statement.
-    if (!stat.matched) {
-      stat = while_statement();
+    stat = while_statement();
 
-      if (stat.errored) return Failure::kError;
-    }
+    if (stat.errored) return Failure::kError;
 
-    if (!stat.matched) 
-      // throw an error if all statements failed.
-      return error("invalid statement.");
+    if (stat.matched) return std::move(stat);
 
-    if (!matches(Token::Type::kSemicolon))
-      return error("missing a ';' after statement.");
+    // try a expression statement.
+    // expression should always be the last ones to be parsed here.
+    stat = parse_expr_stat();
 
-    return stat;
+    if (stat.errored) return Failure::kError;
+
+    if (stat.matched) return std::move(stat);
+
+    // throw an error if all statements failed.
+    return error("invalid statement.");
   }
 
   Result<ast::CRef<ast::BlockStat>> Parser::parse_block()
@@ -326,6 +336,9 @@ namespace kate::tlr {
 
       expr_list.push_back(expr);
     }
+
+    if (!matches(Token::Type::kSemicolon))
+      return error("missing a ';' after expression statement.");
 
     return expr_list;
   }
