@@ -376,9 +376,6 @@ namespace kate::tlr {
       expr_list.push_back(expr);
     }
 
-    if (!matches(Token::Type::kSemicolon))
-      return error("missing a ';' after expression statement.");
-
     return expr_list;
   }
 

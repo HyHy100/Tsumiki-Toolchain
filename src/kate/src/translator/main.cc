@@ -12,7 +12,10 @@ namespace kate::tlr {
       .error_callback = error_callback
     });
 
-    parser.parse(R"(@compute
+    parser.parse(R"(@group(0) @binding(0) 
+buffer<read> buffer1: f32;
+
+@compute
 fn main() {
   if 6 + 9 + 7 + 9 + 5 > 12 {
     66 + 88 + 99;
