@@ -243,25 +243,39 @@ namespace kate::tlr::ast {
     );
   }
 
-  Type::Type(
-    const std::string& id,
-    std::vector<CRef<Expr>>&& generic_expression_list
-  ) : m_id { id },
-      m_generic_expression_list { std::move(generic_expression_list) }
+  Type::Type(const std::string& id) 
+    : m_id { id },
+      m_is_array { false }
   {
+  }
+
+  Type::Type(CRef<Type>&& type)
+    : m_is_array { true },
+      m_subtype { std::move(type) }
+  {
+  }
+
+  Type::Type(CRef<Type>&& type, CRef<Expr>&& size_expr)
+    : m_is_array { true },
+      m_subtype { std::move(type) },
+      m_size_expr { std::move(size_expr) }
+  {
+  }
+
+  CRef<Expr>& Type::sizeExpr()
+  {
+    return m_size_expr;
+  }
+
+  bool Type::isUnsizedArray()
+  {
+    // arrays without size expressions are unsized.
+    return m_is_array && !m_size_expr;
   }
 
   CRef<TreeNode> Type::clone()
   {
-    return context().make<Type>(
-        m_id,
-        context().clone(m_generic_expression_list)
-    );
-  }
-
-  std::vector<CRef<Expr>>& Type::generic_expression_list()
-  {
-    return m_generic_expression_list;
+    return context().make<Type>(m_id);
   }
 
   StructMember::StructMember(

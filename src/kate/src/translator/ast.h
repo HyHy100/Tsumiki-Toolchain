@@ -482,17 +482,22 @@ namespace kate::tlr::ast {
 
   class Type final : public base::rtti::Castable<Type, Expr> {
   public:
-    Type(
-      const std::string& id,
-      std::vector<CRef<Expr>>&& generic_expression_list = {}
-    );
+    Type(const std::string& id);
+
+    Type(CRef<Type>&& type);
+
+    Type(CRef<Type>&& type, CRef<Expr>&& size);
+
+    CRef<Expr>& sizeExpr();
+
+    bool isUnsizedArray();
 
     CRef<TreeNode> clone() override;
-
-    std::vector<CRef<Expr>>& generic_expression_list();
   private:
     std::string m_id;
-    std::vector<CRef<Expr>> m_generic_expression_list;
+    bool m_is_array;
+    CRef<Type> m_subtype;
+    CRef<Expr> m_size_expr;
   };
 
   class StructMember final : public base::rtti::Castable<StructMember, Decl> {

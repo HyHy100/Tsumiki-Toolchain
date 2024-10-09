@@ -15,7 +15,7 @@ namespace kate::tlr {
     parser.parse(R"(@group(0) @binding(0) 
 buffer<read> buffer1: f32;
 
-buffer<read> buffer2: {
+buffer<read> buffer2: [2000][2000]{
   a: f32,
   b: f32
 };

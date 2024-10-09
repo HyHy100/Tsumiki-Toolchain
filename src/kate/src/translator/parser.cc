@@ -1044,6 +1044,31 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::Type>> Parser::expect_type()
   {
+    if (matches(Token::Type::kLBracket)) {
+      auto e = parse_expr();
+
+      if (e.errored) return Failure::kError;
+
+      if (!matches(Token::Type::kRBracket)) 
+        return error("missing ']' in array size.");
+
+      auto type = expect_type();
+
+      if (type.errored) return Failure::kError;
+      else if (!type.matched)
+        return error("missing type in array.");
+
+      if (e.matched) // if there is a size expression, then array is sized.
+        return ast::context().make<ast::Type>(
+          std::move(type.value),
+          std::move(e.value)
+        );
+      else // otherwise size is unknown.
+        return ast::context().make<ast::Type>(
+          std::move(type.value)
+        );
+    }
+
     auto struct_members_ = struct_members();
 
     if (struct_members_.errored) return Failure::kError;
