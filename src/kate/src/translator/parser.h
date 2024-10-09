@@ -40,8 +40,6 @@ namespace kate::tlr {
 
         operator T&&()
         {
-          assert(matched);
-
           return std::move(value);
         }
 
@@ -108,6 +106,8 @@ namespace kate::tlr {
 
         Result<ast::CRef<ast::ForStat>> for_statement();
 
+        Result<ast::CRef<ast::VarStat>> var_statement();
+
         Result<ast::CRef<ast::WhileStat>> while_statement();
 
         Result<ast::CRef<ast::BlockStat>> parse_block();
@@ -134,7 +134,7 @@ namespace kate::tlr {
         Result<ast::CRef<ast::LitExpr>> literal_expr();
 
         Result<std::string> parse_name();
-
+        
         Failure error(const std::string& message);
 
         ParserOptions m_options;

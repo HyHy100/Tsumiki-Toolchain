@@ -241,16 +241,50 @@ namespace kate::tlr {
       std::move(expr_list)
     );
   }
+
+  Result<ast::CRef<ast::VarStat>> Parser::var_statement()
+  {
+    if (matches("var")) {
+      auto name = parse_name();
+
+      if (name.errored) return Failure::kError;
+
+      if (!name.matched) return error("missing name identifier in variable statement.");
+
+      ast::CRef<ast::Expr> initializer;
+
+      if (matches(Token::Type::kEqual)) {
+        auto initializer_result = parse_expr();
+
+        if (initializer_result.errored) return Failure::kError;
+
+        if (!initializer_result.matched) error("missing initializer expression after '=' in variable statement.");
+
+        initializer = std::move(initializer_result.value);
+      } 
+
+      return ast::context().make<ast::VarStat>(
+        ast::context().make<ast::VarDecl>(name.value),
+        std::move(initializer)
+      );
+    }
+
+    return Failure::kNoMatch;
+  }
  
   Result<ast::CRef<ast::CallStat>> Parser::call_statement()
   {
     auto call_expr_ = call_expr();
 
-    if (call_expr_.errored) return Failure::kError;
+    if (call_expr_.errored)
+      return Failure::kError;
 
-    if (call_expr_.matched) return call_expr_;
+    if (!call_expr_.matched)
+      return Failure::kNoMatch;
 
-    return Failure::kNoMatch;
+    if (!matches(Token::Type::kSemicolon)) return error("missing ';' after function call statement.");
+
+    return call_expr_;
   }
 
   Result<ast::CRef<ast::IfStat>> Parser::if_statement()
@@ -313,6 +347,12 @@ namespace kate::tlr {
 
     // try a while statement.
     stat = while_statement();
+
+    if (stat.errored) return Failure::kError;
+
+    if (stat.matched) return std::move(stat);
+
+    stat = var_statement();
 
     if (stat.errored) return Failure::kError;
 

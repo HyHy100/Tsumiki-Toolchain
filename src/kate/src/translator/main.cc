@@ -17,9 +17,11 @@ buffer<read> buffer1: f32;
 
 @compute
 fn main() {
-  if 6 + 9 + 7 + 9 + 5 > 12 {
+  if buffer1[55] + 9 + 7 + 9 + 5 > 12 {
     66 + 88 + 99;
   }
+
+  fncall();
 })");
 
     return 0;
