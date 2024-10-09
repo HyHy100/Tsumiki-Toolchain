@@ -541,6 +541,9 @@ namespace kate::tlr::ast {
     CRef<Expr> m_initializer;
   };
 
+  class Expr;
+  class BlockStat;
+
   class ExprStat final : public base::rtti::Castable<ExprStat, Stat> {
   public:
     ExprStat(CRef<Expr>&& expr);

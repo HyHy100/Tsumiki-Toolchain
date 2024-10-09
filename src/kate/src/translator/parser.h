@@ -100,6 +100,12 @@ namespace kate::tlr {
 
         Result<ast::CRef<ast::Stat>> statement();
 
+        Result<ast::CRef<ast::IfStat>> if_statement();
+
+        Result<ast::CRef<ast::ForStat>> for_statement();
+
+        Result<ast::CRef<ast::WhileStat>> while_statement();
+
         Result<ast::CRef<ast::BlockStat>> parse_block();
 
         Result<std::vector<ast::CRef<ast::Attr>>> parse_attributes();

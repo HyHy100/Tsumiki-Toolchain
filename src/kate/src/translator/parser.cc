@@ -133,17 +133,156 @@ namespace kate::tlr {
     return ast::context().make<ast::ExprStat>(std::move(expr));
   }
 
+  Result<ast::CRef<ast::WhileStat>> Parser::while_statement()
+  {
+    if (matches("while")) {
+      auto condition = parse_expr();
+
+      if (condition.errored)
+        return Failure::kError;
+
+      if (!condition.matched)
+        return error("missing condition in while statement.");
+
+      auto block = parse_block();
+
+      if (block.errored)
+        return Failure::kError;
+
+      if (!block.matched)
+        return error("missing block in while statement.");
+
+      return ast::context().make<ast::WhileStat>(
+        std::move(condition.value),
+        std::move(block.value)
+      );
+    }
+    
+    return Failure::kNoMatch;
+  }
+
+  Result<ast::CRef<ast::ForStat>> Parser::for_statement()
+  {
+    if (matches("for")) {
+      // TODO: Think about this better.
+      // about how to handle cases like
+      // for ;;; {}
+      // for now, deny any attempts.
+      auto initializer = statement();
+
+      if (initializer.errored)
+        return Failure::kError;
+
+      if (!initializer.matched)
+        return error("missing initializer in for statement.");
+
+      auto condition = parse_expr();
+
+      if (condition.errored)
+        return Failure::kError;
+
+      if (!condition.matched)
+        return error("missing condition in for statement.");
+
+      if (!matches(Token::Type::kSemicolon))
+        return error("missing semicolon after for statement condition.");
+
+      auto continuing = statement();
+
+      if (continuing.errored)
+        return Failure::kError;
+
+      if (!continuing.matched)
+        return error("missing continuing expression in for statement.");
+
+      auto block = parse_block();
+
+      if (block.errored) return Failure::kError;
+
+      if (!block.matched)
+        return error("missing block in for statement.");
+
+      return ast::context().make<ast::ForStat>(
+        ast::context().make<ast::ExprStat>(
+          std::move(initializer.value)
+        ),
+        std::move(condition.value),
+        ast::context().make<ast::ExprStat>(
+          std::move(continuing.value)
+        ),
+        std::move(block)
+      );      
+    }
+
+    return Failure::kNoMatch;
+  }
+
+  Result<ast::CRef<ast::IfStat>> Parser::if_statement()
+  {
+    if (matches("if")) {
+      auto condition = parse_expr();
+
+      if (condition.errored) return Failure::kError;
+
+      if (!condition.matched) 
+        return error("missing condition expression in 'if' statement.");
+
+      auto block = parse_block();
+
+      if (block.errored) return Failure::kError;
+
+      if (!block.matched) 
+        return error("missing block in 'if' statement.");
+
+      ast::CRef<ast::BlockStat> else_block = {};
+
+      if (matches("else")) {
+        auto else_block_result = parse_block();
+
+        if (else_block_result.errored) return Failure::kError;
+
+        if (!else_block_result.matched)
+          return error("missing block in 'else' statement.");
+
+        else_block = else_block_result;
+      }
+
+      return ast::context().make<ast::IfStat>(
+        std::move(condition),
+        std::move(block),
+        std::move(else_block)
+      );
+    }
+
+    return Failure::kNoMatch;
+  }
+
   Result<ast::CRef<ast::Stat>> Parser::statement()
   {
     Result<ast::CRef<ast::Stat>> stat = parse_expr_stat();
 
     if (stat.errored) return Failure::kError;
 
-    // final check
-    if (!stat.matched) return error("invalid statement.");
+    // try a for statement.
+    if (!stat.matched) {
+      stat = for_statement();
+
+      if (stat.errored) return Failure::kError;
+    }
+
+    // try a while statement.
+    if (!stat.matched) {
+      stat = while_statement();
+
+      if (stat.errored) return Failure::kError;
+    }
+
+    if (!stat.matched) 
+      // throw an error if all statements failed.
+      return error("invalid statement.");
 
     if (!matches(Token::Type::kSemicolon))
-      return error("missing a  ';' after statement.");
+      return error("missing a ';' after statement.");
 
     return stat;
   }
