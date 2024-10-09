@@ -648,19 +648,32 @@ namespace kate::tlr::ast {
     std::vector<CRef<Attr>> m_attrs;
   };
 
+  enum class AccessMode {
+    kWrite,
+    kRead,
+    kReadWrite,
+    kCount
+  };
+
+  struct BufferArgs {
+    AccessMode access_mode = AccessMode::kReadWrite;
+  };
+
   class BufferDecl final : public base::rtti::Castable<BufferDecl, Decl> {
   public:
     BufferDecl(
       const std::string& name,
-      std::vector<CRef<Expr>>&& args,
+      BufferArgs args,
       CRef<Type>&& type
     );
 
     CRef<TreeNode> clone() override;
 
     CRef<Type>& type();
+
+    const BufferArgs& args() const;
   private:
-    std::vector<CRef<Expr>> m_args;
+    BufferArgs m_args;
     CRef<Type> m_type;
   };
 }

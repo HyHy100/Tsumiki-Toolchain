@@ -15,12 +15,9 @@ namespace kate::tlr {
     parser.parse(R"(@group(0) @binding(0) 
 buffer<read> buffer1: f32;
 
-@group(0) @binding(1)
-buffer<read> buffer2: vec3f;
-
 @compute
 fn main() {
-
+  6 + 9 + 7 + 9 + 5;
 })");
 
     return 0;

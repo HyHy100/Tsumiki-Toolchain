@@ -610,7 +610,7 @@ namespace kate::tlr {
       attribute_list.push_back(
         ast::context().make<ast::Attr>(
           type,
-          expr_list
+          expr_list.unwrap()
         )
       );
     }
@@ -625,13 +625,17 @@ namespace kate::tlr {
     if (matches("buffer")) {
       std::vector<ast::CRef<ast::Expr>> expr_list;
 
+      ast::BufferArgs args;
+
       if (matches(Token::Type::kLT)) {
-        auto expr_list_result = parse_expression_list();
-
-        if (expr_list_result.errored) return Failure::kError;
-
-        if (!expr_list_result.matched)
-          return error("missing expression list between '<..>' while declaring buffer.");
+        if (matches("read"))
+          args.access_mode = ast::AccessMode::kRead;
+        else if (matches("write"))
+          args.access_mode = ast::AccessMode::kWrite;
+        else if (matches("read_write"))
+          args.access_mode = ast::AccessMode::kReadWrite;
+        else
+          return error("unknown buffer access mode.");
 
         if (!matches(Token::Type::kGT)) 
           return error("missing '>' at end of buffer argument list.");
@@ -655,7 +659,7 @@ namespace kate::tlr {
 
       return ast::context().make<ast::BufferDecl>(
         name,
-        std::move(expr_list),
+        args,
         ast::context().make<ast::Type>(type_ident)
       );
     }

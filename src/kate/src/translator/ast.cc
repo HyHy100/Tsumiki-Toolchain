@@ -464,7 +464,7 @@ namespace kate::tlr::ast {
 
   BufferDecl::BufferDecl(
     const std::string& name,
-    std::vector<CRef<Expr>>&& args,
+    BufferArgs args,
     CRef<Type>&& type
   ) : m_args { std::move(args) },
     m_type { std::move(type) }
@@ -476,7 +476,7 @@ namespace kate::tlr::ast {
   {
     return context().make<BufferDecl>(
       m_name,
-      context().clone(m_args),
+      m_args,
       context().clone(m_type)
     );
   }
@@ -484,6 +484,11 @@ namespace kate::tlr::ast {
   CRef<Type>& BufferDecl::type()
   {
     return m_type;
+  }
+
+  const BufferArgs& BufferDecl::args() const
+  {
+    return m_args;
   }
 }
 
