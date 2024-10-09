@@ -433,6 +433,24 @@ namespace kate::tlr {
           }
           advance();
           break;
+        case '&':
+          if (matches(1, '=')) {
+            m_tokens.push_back(Token {
+              Token::Type::kAndEq,
+              std::string_view { &source[offset], 2 },
+              loc
+            });
+
+            advance();
+          } else {
+            m_tokens.push_back(Token {
+              Token::Type::kAnd,
+              std::string_view { &source[offset], 1 },
+              loc
+            });
+          }
+          advance();
+          break;
         case '@':
           m_tokens.push_back(Token {
             Token::Type::kAt,
@@ -591,21 +609,11 @@ namespace kate::tlr {
         case '\r': {           
           if (matches(1, '\n')) {
             advance();
-            /*m_tokens.push_back(Token {
-              Token::Type::kLnBrk,
-              std::string_view { &source[offset], 2 },
-              loc
-            });*/
           }
           advance();
           break;
         }
         case '\n':
-          /*m_tokens.push_back(Token {
-            Token::Type::kLnBrk,
-            std::string_view { &source[offset], 1 },
-            loc
-          });*/
           advance();
           break;
         case '{':
@@ -662,11 +670,6 @@ namespace kate::tlr {
           break;
         case '\t':
         case ' ':
-          /*m_tokens.push_back(Token {
-            Token::Type::kWhitespace,
-            std::string_view { &source[offset], 1 },
-            loc
-          });*/
           advance();
           break;
         default:
