@@ -311,7 +311,8 @@ namespace kate::tlr::ast {
     enum class Type {
       kMinus,
       kPlus,
-      kNot
+      kNot,
+      kFlip
     };
 
     UnaryExpr(

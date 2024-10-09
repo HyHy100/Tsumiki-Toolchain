@@ -227,7 +227,7 @@ namespace kate::tlr {
 
       if (expr.errored) return Failure::kError;
 
-      if (!expr.matched) return error("missing expression after unary '-'.");
+      if (!expr.matched) return error("missing expression after unary '+'.");
     
       return ast::context().make<ast::UnaryExpr>(
         ast::UnaryExpr::Type::kPlus,
@@ -238,10 +238,21 @@ namespace kate::tlr {
 
       if (expr.errored) return Failure::kError;
 
-      if (!expr.matched) return error("missing expression after unary '-'.");
+      if (!expr.matched) return error("missing expression after unary '!'.");
       
       return ast::context().make<ast::UnaryExpr>(
         ast::UnaryExpr::Type::kNot,
+        std::move(expr)
+      );
+    } else if (matches(Token::Type::kTilde)) {
+      auto expr = primary_expr();
+
+      if (expr.errored) return Failure::kError;
+
+      if (!expr.matched) return error("missing expression after unary '~'.");
+      
+      return ast::context().make<ast::UnaryExpr>(
+        ast::UnaryExpr::Type::kFlip,
         std::move(expr)
       );
     }

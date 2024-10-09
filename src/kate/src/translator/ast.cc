@@ -68,7 +68,7 @@ namespace kate::tlr::ast {
 
   CRef<TreeNode> UnaryExpr::clone()
   {
-    context().make<UnaryExpr>(
+    return context().make<UnaryExpr>(
       m_type,
       context().clone(m_operand)
     );

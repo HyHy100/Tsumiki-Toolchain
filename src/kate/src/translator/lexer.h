@@ -33,6 +33,7 @@ namespace kate::tlr {
       kAnd,       // &
       kOr,        // |
       kOrEq,      // |=
+      kTilde,     // ~
       kXor,       // ^
       kXorEq,     // ^=
       kAndEq,     // &=
