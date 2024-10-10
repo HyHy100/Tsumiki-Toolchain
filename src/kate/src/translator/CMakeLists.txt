@@ -12,6 +12,8 @@ target_sources(
   PRIVATE 
   lexer.cc
   ast.cc
+  sem.cc
+  types.cc
   main.cc
   parser.cc
 )
