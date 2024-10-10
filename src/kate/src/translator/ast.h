@@ -416,6 +416,7 @@ namespace kate::tlr::ast {
       kVertex,
       kFragment,
       kWorkgroupSize,
+      kLocation,
       kCount
     };
 
@@ -474,10 +475,15 @@ namespace kate::tlr::ast {
   class VarDecl final : public base::rtti::Castable<VarDecl, Decl> {
   public:
     VarDecl(
-      const std::string& name
+      const std::string& name,
+      CRef<Type>&& type
     );
 
     CRef<TreeNode> clone() override;
+
+    CRef<Type>& type();
+  private:
+    CRef<Type> m_type;
   };
 
   class Type final : public base::rtti::Castable<Type, Expr> {

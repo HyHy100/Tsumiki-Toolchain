@@ -322,7 +322,20 @@ namespace kate::tlr {
 
       if (name.errored) return Failure::kError;
 
-      if (!name.matched) return error("missing name identifier in variable statement.");
+      if (!name.matched) 
+        return error("missing name identifier in variable statement.");
+
+      ast::CRef<ast::Type> type;
+
+      if (matches(Token::Type::kColon)) {
+        auto type_result = expect_type();
+
+        if (type_result.errored) return Failure::kError;
+
+        if (!type_result.matched) return error("missing type after ':' in variable declaration statement.");
+
+        type = std::move(type_result.value);
+      }
 
       ast::CRef<ast::Expr> initializer;
 
@@ -331,13 +344,20 @@ namespace kate::tlr {
 
         if (initializer_result.errored) return Failure::kError;
 
-        if (!initializer_result.matched) error("missing initializer expression after '=' in variable statement.");
+        if (!initializer_result.matched) 
+          error("missing initializer expression after '=' in variable statement.");
 
         initializer = std::move(initializer_result.value);
       } 
 
+      if (!matches(Token::Type::kSemicolon))
+        return error("missing ';' after variable declaration statement.");
+
       return ast::context().make<ast::VarStat>(
-        ast::context().make<ast::VarDecl>(name.value),
+        ast::context().make<ast::VarDecl>(
+          name.value,
+          std::move(type)
+        ),
         std::move(initializer)
       );
     }
@@ -403,6 +423,13 @@ namespace kate::tlr {
   Result<ast::CRef<ast::Stat>> Parser::statement()
   {
     Result<ast::CRef<ast::Stat>> stat;
+
+    // try a return statement.
+    stat = parse_return_stat();
+
+    if (stat.errored) return Failure::kError;
+
+    if (stat.matched) return std::move(stat);
 
     // try a if statement.
     stat = if_statement();
@@ -900,6 +927,8 @@ namespace kate::tlr {
         type = ast::Attr::Type::kGroup;
       else if (ident.value == "binding")
         type = ast::Attr::Type::kBinding;
+      else if (ident.value == "location")
+        type = ast::Attr::Type::kLocation;
       else 
         return error(fmt::format("unknown attribute '{}'.", ident.value));
 
@@ -923,6 +952,24 @@ namespace kate::tlr {
     }
 
     return attribute_list;
+  }
+
+  Result<ast::CRef<ast::ReturnStat>> Parser::parse_return_stat()
+  {
+    if (matches("return")) {
+      auto expr = parse_expr();
+
+      if (expr.errored) return Failure::kError;
+
+      if (!expr.matched) return error("missing expression in 'return' statement.");
+
+      if (!matches(Token::Type::kSemicolon))
+        return error("missing ';' after 'return' statement.");
+
+      return ast::context().make<ast::ReturnStat>(std::move(expr.value));
+    }
+
+    return Failure::kNoMatch;
   }
 
   Result<ast::CRef<ast::BufferDecl>> Parser::parse_buffer_decl(
@@ -1015,6 +1062,19 @@ namespace kate::tlr {
 
       if (!current()->is(Token::Type::kRightParen))
         return error("expected a ')' after function arguments.");
+
+      ast::CRef<ast::Type> type;
+
+      if (matches(Token::Type::kColon)) {
+        auto type_result = expect_type();
+
+        if (type_result.errored) return Failure::kError;
+
+        if (!type_result.matched) 
+          return error("missing type after ':' in function return type.");
+
+        type = std::move(type_result.value);
+      } else type = ast::context().make<ast::Type>("void");
 
       auto block = parse_block();
 

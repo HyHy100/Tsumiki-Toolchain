@@ -85,6 +85,7 @@
       "expected": "cpp",
       "__memory": "cpp",
       "regex": "cpp",
-      "any": "cpp"
+      "any": "cpp",
+      "*.hpp11": "cpp"
     }
 }

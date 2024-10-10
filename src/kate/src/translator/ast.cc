@@ -214,15 +214,24 @@ namespace kate::tlr::ast {
     return m_attrs;
   }
 
-  VarDecl::VarDecl(const std::string& name)
+  VarDecl::VarDecl(
+    const std::string& name,
+    CRef<Type>&& type
+  ) : m_type { std::move(type) }
   {
     m_name = name;
+  }
+
+  CRef<Type>& VarDecl::type()
+  {
+    return m_type;
   }
 
   CRef<TreeNode> VarDecl::clone()
   {
     return context().make<VarDecl>(
-      m_name
+      m_name,
+      context().clone(m_type)
     );
   }
 

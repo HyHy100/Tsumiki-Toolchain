@@ -13,20 +13,30 @@ namespace kate::tlr {
     });
 
     parser.parse(R"(@group(0) @binding(0) 
-buffer<read> buffer1: f32;
+buffer<read> buffer1: float;
 
-buffer<read> buffer2: [2000][2000]{
-  a: f32,
-  b: f32
+buffer<read> buffer2: [][64]{
+  a: float,
+  b: float
 };
 
-@compute
-fn main() {
-  if buffer1[55] + 9 + 7 + 9 + 5 > 12 {
+struct Output {
+  @location(0) color : float4,
+  @location(1) normal: float4
+}
+
+@fragment
+fn main(): Output {
+  if buffer2[55][2] + 9 + 7 + 9 + 5 > 12 {
     66 + 88 + 99;
   }
 
-  fncall();
+  var a = 66;
+
+  return Output(
+    vec4f(1.0, 0.0, 0.0, 1.0),
+    vec3f(1.0, 0.0, 0.0)
+  );
 })");
 
     return 0;
