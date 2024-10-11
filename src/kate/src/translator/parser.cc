@@ -1,4 +1,5 @@
 #include "parser.h"
+#include "sem.h"
 
 #include <fmt/format.h>
 
@@ -226,7 +227,7 @@ namespace kate::tlr {
     if (!peek(1)->is(Token::Type::kIdent) || !peek(2)->is(Token::Type::kLeftParen))
       return Failure::kNoMatch;
 
-    auto identifier = matches(Token::Type::kIdent); 
+    auto identifier = identifier_expr(); 
     
     matches(Token::Type::kLeftParen);
 
@@ -238,7 +239,7 @@ namespace kate::tlr {
       return error("missing ')' after function call argument list.");
   
     return ast::context().make<ast::CallExpr>(
-      std::string(identifier->value_as<std::string_view>()),
+      std::move(identifier),
       std::move(expr_list)
     );
   }
@@ -1074,7 +1075,7 @@ namespace kate::tlr {
           return error("missing type after ':' in function return type.");
 
         type = std::move(type_result.value);
-      } else type = ast::context().make<ast::Type>("void");
+      } else type = ast::context().make<ast::TypeId>("void");
 
       auto block = parse_block();
 
@@ -1086,7 +1087,7 @@ namespace kate::tlr {
 
       return ast::context().make<ast::FuncDecl>(
         function_name,
-        block,
+        std::move(block.value),
         std::move(function_args)
       );
     }
@@ -1118,15 +1119,12 @@ namespace kate::tlr {
       else if (!type.matched)
         return error("missing type in array.");
 
-      if (e.matched) // if there is a size expression, then array is sized.
-        return ast::context().make<ast::Type>(
+      return static_cast<ast::CRef<ast::Type>>(
+        ast::context().make<ast::ArrayType>(
           std::move(type.value),
           std::move(e.value)
-        );
-      else // otherwise size is unknown.
-        return ast::context().make<ast::Type>(
-          std::move(type.value)
-        );
+        )
+      );
     }
 
     auto struct_members_ = struct_members();
@@ -1145,7 +1143,9 @@ namespace kate::tlr {
         )
       );
 
-      return ast::context().make<ast::Type>(struct_name);
+      return static_cast<ast::CRef<ast::Type>>(
+        ast::context().make<ast::TypeId>(struct_name)
+      );
     }
 
     auto ident = parse_name();
@@ -1154,7 +1154,9 @@ namespace kate::tlr {
 
     if (!ident.matched) return error("expected type identifier.");
 
-    return ast::context().make<ast::Type>(ident.value);
+    return static_cast<ast::CRef<ast::Type>>(
+      ast::context().make<ast::TypeId>(ident.value)
+    );
   }
 
   Failure Parser::error(

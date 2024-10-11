@@ -13,6 +13,18 @@
 
 #include "base/rtti.h"
 
+namespace kate::tlr::sem {
+  class Decl;
+  
+  class Expr;
+
+  class BlockStat;
+
+  class Module;
+
+  class Type;
+}
+
 namespace kate::tlr::ast {
   template<typename T>
   class CRef {
@@ -224,8 +236,14 @@ namespace kate::tlr::ast {
     virtual ~Decl() = default;
 
     const std::string& name() const;
+
+    void setSem(std::unique_ptr<sem::Decl>&& sem);
+
+    sem::Decl* sem();
   protected:
     std::string m_name;
+  private:
+    std::unique_ptr<sem::Decl> m_sem;
   };
 
   class Module : public base::rtti::Castable<Module, TreeNode> {
@@ -237,11 +255,23 @@ namespace kate::tlr::ast {
     CRef<TreeNode> clone() override;
 
     std::vector<CRef<Decl>>& global_declarations();
+
+    sem::Module* sem();
+
+    void setSem(std::unique_ptr<sem::Module>&& sem);
   private:
     std::vector<CRef<Decl>> m_global_declarations;
+    std::unique_ptr<sem::Module> m_sem;
   };
 
-  class Expr : public base::rtti::Castable<Expr, TreeNode> {};
+  class Expr : public base::rtti::Castable<Expr, TreeNode> {
+  public:
+    sem::Expr* sem();
+  
+    void setSem(std::unique_ptr<sem::Expr>&& sem);
+  private:
+    std::unique_ptr<sem::Expr> m_sem;
+  };
 
   class IdExpr : public base::rtti::Castable<IdExpr, Expr> {
   public:
@@ -299,6 +329,8 @@ namespace kate::tlr::ast {
     }
 
     LitExpr(Type type, uint64_t value);
+
+    Type type() const;
 
     ast::CRef<ast::TreeNode> clone() override;
   private:
@@ -464,6 +496,8 @@ namespace kate::tlr::ast {
     std::vector<CRef<Attr>>& attrs();
 
     CRef<BlockStat>& block();
+
+    std::vector<CRef<FuncArg>>& args();
   private:
     std::vector<CRef<FuncArg>> m_args;
 
@@ -486,24 +520,33 @@ namespace kate::tlr::ast {
     CRef<Type> m_type;
   };
 
-  class Type final : public base::rtti::Castable<Type, Expr> {
+  class Type : public base::rtti::Castable<Type, Expr> {
   public:
-    Type(const std::string& id);
+  };
 
-    Type(CRef<Type>&& type);
-
-    Type(CRef<Type>&& type, CRef<Expr>&& size);
-
-    CRef<Expr>& sizeExpr();
-
-    bool isUnsizedArray();
+  class TypeId final : public base::rtti::Castable<TypeId, Type> {
+  public:
+    TypeId(const std::string& id);
 
     CRef<TreeNode> clone() override;
+
+    std::string& id();
   private:
     std::string m_id;
-    bool m_is_array;
-    CRef<Type> m_subtype;
-    CRef<Expr> m_size_expr;
+  };
+
+  class ArrayType final : public base::rtti::Castable<ArrayType, Type> {
+  public:
+    ArrayType(CRef<Type>&& type, CRef<Expr>&& arraySizeExpr);
+
+    CRef<TreeNode> clone() override;
+
+    CRef<Type>& type();
+
+    CRef<Expr>& arraySizeExpr();
+  private:
+    CRef<Type> m_type;
+    CRef<Expr> m_arraySizeExpr;
   };
 
   class StructMember final : public base::rtti::Castable<StructMember, Decl> {
@@ -535,7 +578,13 @@ namespace kate::tlr::ast {
     CRef<TreeNode> clone() override;
 
     std::vector<CRef<Stat>>& stats();
+
+    sem::BlockStat* sem();
+
+    void setSem(std::unique_ptr<sem::BlockStat>&& sem);
   private:
+    std::unique_ptr<sem::BlockStat> m_sem;
+
     std::vector<CRef<Stat>> m_stats;
   };
 
@@ -547,6 +596,10 @@ namespace kate::tlr::ast {
     );
 
     CRef<TreeNode> clone() override;
+
+    CRef<VarDecl>& decl();
+
+    CRef<Expr>& expr();
   private:
     CRef<VarDecl> m_vardecl;
     CRef<Expr> m_initializer;
@@ -632,20 +685,20 @@ namespace kate::tlr::ast {
     CRef<BlockStat> m_block;
   };
 
-  class CallExpr final : public base::rtti::Castable<CallExpr, Stat> {
+  class CallExpr final : public base::rtti::Castable<CallExpr, Expr> {
   public:
     CallExpr(
-      const std::string& identifier,
-      std::vector<CRef<Expr>> args
+      CRef<IdExpr>&& id,
+      std::vector<CRef<Expr>>&& args
     );
 
     CRef<TreeNode> clone() override;
 
-    const std::string& identifier() const;
+    CRef<IdExpr>& id();
 
     std::vector<CRef<Expr>>& args();
   private:
-    std::string m_identifier;
+    CRef<IdExpr> m_id;
     std::vector<CRef<Expr>> m_args;
   };
 
@@ -669,6 +722,8 @@ namespace kate::tlr::ast {
     CRef<TreeNode> clone() override;
 
     CRef<Expr>& condition();
+
+    CRef<BlockStat>& block();
   private:
     CRef<Expr> m_condition;
     CRef<BlockStat> m_block;

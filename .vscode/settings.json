@@ -86,6 +86,8 @@
       "__memory": "cpp",
       "regex": "cpp",
       "any": "cpp",
-      "*.hpp11": "cpp"
-    }
+      "*.hpp11": "cpp",
+      "future": "cpp"
+    },
+    "cmake.sourceDirectory": "/home/hyhy100/work/Tsumiki-Toolchain/src/third_party/khronos/glslang"
 }

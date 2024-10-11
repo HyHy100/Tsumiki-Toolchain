@@ -27,6 +27,11 @@ namespace kate::tlr::sem {
     return m_type;
   }
 
+  Scope::Scope()
+    : m_parent { nullptr }
+  {
+  }
+
   Scope::Scope(Scope* parent)
     : m_parent { parent }
   {
@@ -35,6 +40,11 @@ namespace kate::tlr::sem {
   Scope* Scope::parent()
   {
     return m_parent;
+  }
+
+  void Scope::setParent(Scope* parent)
+  {
+    m_parent = parent;
   }
 
   void Scope::addDecl(Decl* decl)
@@ -57,5 +67,26 @@ namespace kate::tlr::sem {
           return d;
 
     return nullptr;
+  }
+
+  Scope& BlockStat::scope()
+  {
+    return m_scope;
+  }
+
+  Scope& Module::scope()
+  {
+    return m_scope;
+  }
+
+  Type::Type(
+    types::Type* type
+  )
+  {
+  }
+
+  types::Type* Type::type()
+  {
+    return m_type;
   }
 }

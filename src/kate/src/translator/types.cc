@@ -1,5 +1,7 @@
 #include "types.h"
 
+#include <fmt/format.h>
+
 namespace kate::tlr::types {
   Mat::Mat(
     Type* type,
@@ -26,6 +28,11 @@ namespace kate::tlr::types {
     return m_type;
   }
 
+  std::string Mat::mangledName() const
+  {
+    return fmt::format("{}{}x{}", m_type->mangledName(), rows(), columns()); 
+  }
+
   Array::Array(Type* type, size_t count)
     : m_count { count },
       m_type { type }
@@ -42,10 +49,20 @@ namespace kate::tlr::types {
     return m_type;
   }
 
+  std::string Array::mangledName() const
+  {
+    return fmt::format("{}[{}]", m_type->mangledName(), count()); 
+  }
+
   Custom::Member::Member(Type* type, const std::string& name)
     : m_type { type },
       m_name { name }
   {
+  }
+
+  std::string Custom::mangledName() const
+  {
+    return m_name; 
   }
 
   Type* Custom::Member::type()
@@ -69,6 +86,31 @@ namespace kate::tlr::types {
   std::vector<Custom::Member>& Custom::members()
   {
     return m_members;
+  }
+
+  Mgr::Mgr()
+  {
+  }
+
+  types::Type* Mgr::findType(const std::string& type)
+  {
+    auto it = m_type_table.find(type);
+
+    return (it != m_type_table.end()) ? it->second.get() : nullptr;
+  }
+
+  void Mgr::addType(
+    const std::string& name,
+    std::unique_ptr<Type>&& type
+  )
+  {
+    m_type_table[name] = std::move(type);
+  }
+
+  Mgr& system()
+  {
+    static Mgr mgr;
+    return mgr;
   }
 }
 

@@ -1,4 +1,5 @@
 #include "ast.h"
+#include "sem.h"
 
 #include <fmt/format.h>
 
@@ -7,6 +8,16 @@ namespace kate::tlr::ast {
   {
     static ASTContext nctx;
     return nctx;
+  }
+
+  void Decl::setSem(std::unique_ptr<sem::Decl>&& sem)
+  {
+    m_sem = std::move(sem);
+  }
+
+  sem::Decl* Decl::sem()
+  {
+    return m_sem.get();
   }
 
   const std::string& Decl::name() const
@@ -31,9 +42,34 @@ namespace kate::tlr::ast {
     return m_global_declarations;
   }
 
+  sem::Module* Module::sem()
+  {
+    return m_sem.get();
+  }
+
+  void Module::setSem(std::unique_ptr<sem::Module>&& sem)
+  {
+    m_sem = std::move(sem);
+  }
+
+  sem::Expr* Expr::sem()
+  {
+    return m_sem.get();
+  }
+
+  void Expr::setSem(std::unique_ptr<sem::Expr>&& sem)
+  {
+    m_sem = std::move(sem);
+  }
+
   LitExpr::LitExpr(Type type, uint64_t value)
     : m_type { type }, m_value { value }
   {
+  }
+
+  LitExpr::Type LitExpr::type() const
+  {
+    return m_type;
   }
 
   ast::CRef<ast::TreeNode> LitExpr::clone()
@@ -199,6 +235,11 @@ namespace kate::tlr::ast {
     return m_block;
   }
 
+  std::vector<CRef<FuncArg>>& FuncDecl::args()
+  {
+    return m_args;
+  }
+
   CRef<TreeNode> FuncDecl::clone()
   {
     return context().make<FuncDecl>(
@@ -243,6 +284,16 @@ namespace kate::tlr::ast {
   {
   }
 
+  CRef<VarDecl>& VarStat::decl()
+  {
+    return m_vardecl;
+  }
+
+  CRef<Expr>& VarStat::expr()
+  {
+    return m_initializer;
+  }
+
   CRef<TreeNode> VarStat::clone()
   {
     return context().make<VarStat>(
@@ -252,39 +303,45 @@ namespace kate::tlr::ast {
     );
   }
 
-  Type::Type(const std::string& id) 
-    : m_id { id },
-      m_is_array { false }
+  TypeId::TypeId(const std::string& id) 
+    : m_id { id }
   {
   }
 
-  Type::Type(CRef<Type>&& type)
-    : m_is_array { true },
-      m_subtype { std::move(type) }
+  CRef<TreeNode> TypeId::clone()
+  {
+    return context().make<TypeId>(m_id);
+  }
+
+  std::string& TypeId::id()
+  {
+    return m_id;
+  }
+
+  ArrayType::ArrayType(
+    CRef<Type>&& type,
+    CRef<Expr>&& arraySizeExpr
+  ) : m_type { std::move(type) },
+      m_arraySizeExpr { std::move(arraySizeExpr) }
   {
   }
 
-  Type::Type(CRef<Type>&& type, CRef<Expr>&& size_expr)
-    : m_is_array { true },
-      m_subtype { std::move(type) },
-      m_size_expr { std::move(size_expr) }
+  CRef<TreeNode> ArrayType::clone()
   {
+    return context().make<ArrayType>(
+      context().clone(m_type),
+      context().clone(m_arraySizeExpr)
+    );
   }
 
-  CRef<Expr>& Type::sizeExpr()
+  CRef<Expr>& ArrayType::arraySizeExpr()
   {
-    return m_size_expr;
+    return m_arraySizeExpr;
   }
 
-  bool Type::isUnsizedArray()
+  CRef<Type>& ArrayType::type()
   {
-    // arrays without size expressions are unsized.
-    return m_is_array && !m_size_expr;
-  }
-
-  CRef<TreeNode> Type::clone()
-  {
-    return context().make<Type>(m_id);
+    return m_type;
   }
 
   StructMember::StructMember(
@@ -339,6 +396,16 @@ namespace kate::tlr::ast {
     return m_stats;
   }
 
+  sem::BlockStat* BlockStat::sem()
+  {
+    return m_sem.get();
+  }
+
+  void BlockStat::setSem(std::unique_ptr<sem::BlockStat>&& sem)
+  {
+    m_sem = std::move(sem);
+  }
+
   ExprStat::ExprStat(CRef<Expr>&& expr) 
     : m_expr { std::move(expr) }
   {
@@ -391,9 +458,9 @@ namespace kate::tlr::ast {
   }
 
   CallExpr::CallExpr(
-    const std::string& identifier,
-    std::vector<CRef<Expr>> args
-  ) : m_identifier{ identifier },
+    CRef<IdExpr>&& id,
+    std::vector<CRef<Expr>>&& args
+  ) : m_id { std::move(id) },
     m_args { std::move(args) }
   {
   }
@@ -401,14 +468,14 @@ namespace kate::tlr::ast {
   CRef<TreeNode> CallExpr::clone()
   {
     return ast::context().make<ast::CallExpr>(
-      m_identifier,
+      ast::context().clone(m_id),
       ast::context().clone(m_args)
     );
   }
 
-  const std::string& CallExpr::identifier() const
+  CRef<IdExpr>& CallExpr::id()
   {
-    return m_identifier;
+    return m_id;
   }
 
   std::vector<CRef<Expr>>& CallExpr::args()
@@ -493,6 +560,11 @@ namespace kate::tlr::ast {
   CRef<Expr>& WhileStat::condition()
   {
     return m_condition;
+  }
+
+  CRef<BlockStat>& WhileStat::block()
+  {
+    return m_block;
   }
 
   CRef<TreeNode> BreakStat::clone()
@@ -588,3 +660,5 @@ TS_RTTI_TYPE(ast::Type)
 TS_RTTI_TYPE(ast::BufferDecl)
 TS_RTTI_TYPE(ast::CallExpr)
 TS_RTTI_TYPE(ast::CallStat)
+TS_RTTI_TYPE(ast::ArrayType)
+TS_RTTI_TYPE(ast::TypeId)

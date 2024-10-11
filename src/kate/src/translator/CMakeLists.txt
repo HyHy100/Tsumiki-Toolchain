@@ -7,6 +7,8 @@ set_target_properties(
   CXX_STANDARD_REQUIRED ON
 )
 
+target_compile_options(ksc PRIVATE -fdiagnostics-color=always)
+
 target_sources(
   ksc
   PRIVATE 
@@ -16,6 +18,7 @@ target_sources(
   types.cc
   main.cc
   parser.cc
+  resolver.cc
 )
 
 target_link_libraries(ksc base fmt)

@@ -2,13 +2,17 @@
 
 #include <cstddef>
 #include <string>
+#include <memory>
 
 #include "base/rtti.h"
+#include "ast.h"
 
 namespace kate::tlr::types {
   class Type : public base::rtti::Castable<Type, base::rtti::Base> {
   public:
     virtual ~Type() = default;
+
+    virtual std::string mangledName() const = 0;
   };
 
   class Mat : public base::rtti::Castable<Mat, Type> {
@@ -22,6 +26,8 @@ namespace kate::tlr::types {
     size_t columns() const;
 
     Type* type();
+
+    std::string mangledName() const override;
   private:
     Type* m_type;
     size_t m_rows;
@@ -37,6 +43,8 @@ namespace kate::tlr::types {
     size_t count() const;
 
     Type* type();
+
+    std::string mangledName() const override;
   private:
     Type* m_type;
     size_t m_count;
@@ -66,8 +74,26 @@ namespace kate::tlr::types {
     const std::string& name() const;
 
     std::vector<Member>& members();
+
+    std::string mangledName() const override;
   private:
     std::string m_name;
     std::vector<Member> m_members;
   };
+
+  class Mgr {
+  public:
+    Mgr();
+
+    Type* findType(const std::string& name);
+    
+    void addType(
+      const std::string& name,
+      std::unique_ptr<Type>&& type
+    );
+  private:
+    std::unordered_map<std::string, std::unique_ptr<Type>> m_type_table;
+  };
+
+  Mgr& system();
 }

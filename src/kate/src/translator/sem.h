@@ -30,11 +30,13 @@ namespace kate::tlr::sem {
 
   class Scope {
   public:
-    Scope() = default;
+    Scope();
 
     Scope(Scope* parent);
 
     Scope* parent();
+
+    void setParent(Scope* parent);
 
     void addDecl(Decl* decl);
 
@@ -46,5 +48,38 @@ namespace kate::tlr::sem {
     Scope* m_parent;
 
     std::vector<Decl*> m_decls;
+  };
+
+  class BlockStat {
+  public:
+    BlockStat() = default;
+
+    ~BlockStat() = default;
+
+    Scope& scope();
+  private:
+    Scope m_scope;
+  };
+
+  class Module {
+  public:
+    Module() = default;
+
+    ~Module() = default;
+
+    Scope& scope();
+  private:
+    Scope m_scope;
+  };
+
+  class Type {
+  public:
+    Type() = delete;
+
+    Type(types::Type* type);
+
+    types::Type* type();
+  private:
+    types::Type* m_type;
   };
 }
