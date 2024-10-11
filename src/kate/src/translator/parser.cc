@@ -32,14 +32,23 @@ namespace kate::tlr {
   {
     auto attrs = parse_attributes();
 
-    if (auto func = parse_func_decl(attrs.value); func.matched)
-      return func;
+    Result<ast::CRef<ast::Decl>> decl;
 
-    if (auto buffer = parse_buffer_decl(attrs.value); buffer.matched)
-      return buffer;
+    decl = parse_func_decl(attrs.value); 
+    if (decl.matched)
+      return decl;
 
-    if (auto struct_ = struct_declaration(); struct_.matched)
-      return struct_;
+    decl = parse_buffer_decl(attrs.value); 
+    if (decl.matched)
+      return decl;
+
+    decl = struct_declaration(); 
+    if (decl.matched)
+      return decl;
+
+    decl = parse_uniform_decl(attrs.value); 
+    if (decl.matched)
+      return decl;
 
     // if all global declarations failed, then
     // synchronize to the next '}' and fail.
@@ -968,6 +977,37 @@ namespace kate::tlr {
         return error("missing ';' after 'return' statement.");
 
       return ast::context().make<ast::ReturnStat>(std::move(expr.value));
+    }
+
+    return Failure::kNoMatch;
+  }
+
+  Result<ast::CRef<ast::UniformDecl>> Parser::parse_uniform_decl(
+    std::vector<ast::CRef<ast::Attr>>& attributes
+  )
+  {
+    if (matches("uniform")) {
+      auto name = parse_name();
+
+      if (!name.matched) 
+        return error("missing name in uniform declaration.");
+
+      if (!matches(Token::Type::kColon))
+        return error("missing ':' after uniform name.");
+
+      auto type = expect_type();
+
+      if (!type.matched)
+        return error("missing type in uniform declaration.");
+
+      if (!matches(Token::Type::kSemicolon))
+        return error("missing ';' after uniform declaration.");
+
+      return ast::context().make<ast::UniformDecl>(
+        std::move(type),
+        name.value,
+        std::move(attributes)
+      );
     }
 
     return Failure::kNoMatch;

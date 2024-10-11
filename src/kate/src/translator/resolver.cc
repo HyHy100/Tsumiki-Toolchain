@@ -28,6 +28,11 @@ namespace kate::tlr {
     }
   }
 
+  void Resolver::resolve(ast::UniformDecl* uniform)
+  {
+    resolve(uniform->type().get());
+  }
+
   void Resolver::resolve(ast::StructDecl* struct_)
   {
     for (auto& m : struct_->members()) {

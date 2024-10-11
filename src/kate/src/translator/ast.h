@@ -775,4 +775,25 @@ namespace kate::tlr::ast {
     BufferArgs m_args;
     CRef<Type> m_type;
   };
+
+  class UniformDecl final : public base::rtti::Castable<UniformDecl, Decl> {
+  public:
+    UniformDecl(
+      CRef<Type>&& type,
+      const std::string& name,
+      std::vector<CRef<Attr>>&& attributes
+    );
+
+    CRef<TreeNode> clone() override;
+
+    const std::string& name() const;
+
+    CRef<Type>& type();
+
+    std::vector<CRef<Attr>>& attributes();
+  private:
+    std::string m_name;
+    std::vector<CRef<Attr>> m_attributes;
+    CRef<Type> m_type;
+  };
 }

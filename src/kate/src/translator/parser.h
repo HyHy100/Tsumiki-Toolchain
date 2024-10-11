@@ -94,6 +94,10 @@ namespace kate::tlr {
           std::vector<ast::CRef<ast::Attr>>& attributes
         );
 
+        Result<ast::CRef<ast::UniformDecl>> parse_uniform_decl(
+          std::vector<ast::CRef<ast::Attr>>& attributes
+        );
+
         Result<ast::CRef<ast::ReturnStat>> parse_return_stat();
 
         Result<ast::CRef<ast::Type>> expect_type();

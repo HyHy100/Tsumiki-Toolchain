@@ -225,7 +225,8 @@ namespace kate::tlr::ast {
     std::vector<CRef<FuncArg>>&& args,
     std::vector<CRef<Attr>>&& attributes
   ) : m_attrs { std::move(attributes) },
-    m_args { std::move(args) }
+      m_args { std::move(args) },
+      m_block { std::move(block) }
   {
     m_name = name;
   }
@@ -625,6 +626,40 @@ namespace kate::tlr::ast {
     return m_type;
   }
 
+  UniformDecl::UniformDecl(
+    CRef<Type>&& type,
+    const std::string& name,
+    std::vector<CRef<Attr>>&& attributes
+  ) : m_type { std::move(type) },
+      m_name { name },
+      m_attributes { std::move(attributes) }
+  {
+  }
+
+  CRef<TreeNode> UniformDecl::clone()
+  {
+    return context().make<UniformDecl>(
+      context().clone(m_type),
+      m_name,
+      context().clone(m_attributes)
+    );
+  }
+
+  const std::string& UniformDecl::name() const
+  {
+    return m_name;
+  }
+
+  CRef<Type>& UniformDecl::type()
+  {
+    return m_type;
+  }
+
+  std::vector<CRef<Attr>>& UniformDecl::attributes()
+  {
+    return m_attributes;
+  }
+
   const BufferArgs& BufferDecl::args() const
   {
     return m_args;
@@ -662,3 +697,4 @@ TS_RTTI_TYPE(ast::CallExpr)
 TS_RTTI_TYPE(ast::CallStat)
 TS_RTTI_TYPE(ast::ArrayType)
 TS_RTTI_TYPE(ast::TypeId)
+TS_RTTI_TYPE(ast::UniformDecl)

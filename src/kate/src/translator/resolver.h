@@ -12,6 +12,8 @@ namespace kate::tlr {
     
     void resolve(ast::Module* module);
   private:
+    void resolve(ast::UniformDecl* uniform_);
+
     void resolve(ast::StructDecl* struct_);
 
     void resolve(ast::FuncDecl* func);
