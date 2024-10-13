@@ -90,6 +90,30 @@ namespace kate::tlr::types {
 
   Mgr::Mgr()
   {
+    m_type_table["half"] = std::make_unique<types::Scalar>("half");
+    
+    for (auto i = 2; i <= 4; i++) {
+      auto name = fmt::format("half{}", i);
+      m_type_table[name] = std::make_unique<types::Scalar>(name);
+
+      for (auto j = 2; j <= 4; j++) {
+        auto name = fmt::format("half{}x{}", i, j);
+        m_type_table[name] = std::make_unique<types::Scalar>(name);
+      }
+    }
+
+    m_type_table["uhalf"] = std::make_unique<types::Scalar>("uhalf");
+    
+    for (auto i = 2; i <= 4; i++) {
+      auto name = fmt::format("uhalf{}", i);
+      m_type_table[name] = std::make_unique<types::Scalar>(name);
+
+      for (auto j = 2; j <= 4; j++) {
+        auto name = fmt::format("uhalf{}x{}", i, j);
+        m_type_table[name] = std::make_unique<types::Scalar>(name);
+      }
+    }
+
     m_type_table["float"] = std::make_unique<types::Scalar>("float");
     
     for (auto i = 2; i <= 4; i++) {
