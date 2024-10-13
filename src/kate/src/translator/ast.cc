@@ -13,7 +13,6 @@ namespace kate::tlr::ast {
   uint64_t ASTContext::getID()
   {
     static uint64_t id = 0;
-    fmt::println("id: {}.", id);
     return id++;
   }
 
@@ -69,24 +68,21 @@ namespace kate::tlr::ast {
     m_sem = std::move(sem);
   }
 
-  LitExpr::LitExpr(Type type, uint64_t value)
-    : m_type { type }, m_value { value }
+  LitExpr::LitExpr(const Value& value)
+    : m_value { value }
   {
   }
 
-  LitExpr::Type LitExpr::type() const
-  {
-    return m_type;
-  }
-
-  uint64_t LitExpr::value() const
+  LitExpr::Value& LitExpr::value()
   {
     return m_value;
   }
 
   ast::CRef<ast::TreeNode> LitExpr::clone()
   {
-    return ast::context().make<ast::LitExpr>(m_type, m_value);
+    return ast::context().make<ast::LitExpr>(
+      m_value
+    );
   }
 
   IdExpr::IdExpr(const std::string& ident) 
@@ -509,24 +505,6 @@ namespace kate::tlr::ast {
     return m_args;
   }
 
-  CallStat::CallStat(
-    CRef<CallExpr>&& call_expr
-  ) : m_call_expr { std::move(call_expr) }
-  {
-  }
-
-  CRef<TreeNode> CallStat::clone()
-  {
-    return context().make<CallStat>(
-      context().clone(m_call_expr)
-    );
-  }
-
-  CRef<CallExpr>& CallStat::expr()
-  {
-    return m_call_expr;
-  }
-
   ForStat::ForStat(
     CRef<ExprStat>&& initializer,
     CRef<Expr>&& condition,
@@ -727,7 +705,6 @@ TS_RTTI_TYPE(ast::Module)
 TS_RTTI_TYPE(ast::Type)
 TS_RTTI_TYPE(ast::BufferDecl)
 TS_RTTI_TYPE(ast::CallExpr)
-TS_RTTI_TYPE(ast::CallStat)
 TS_RTTI_TYPE(ast::ArrayType)
 TS_RTTI_TYPE(ast::TypeId)
 TS_RTTI_TYPE(ast::UniformDecl)

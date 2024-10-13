@@ -90,6 +90,53 @@ namespace kate::tlr::types {
 
   Mgr::Mgr()
   {
+    m_type_table["float"] = std::make_unique<types::Scalar>("float");
+    
+    for (auto i = 2; i <= 4; i++) {
+      auto name = fmt::format("float{}", i);
+      m_type_table[name] = std::make_unique<types::Scalar>(name);
+
+      for (auto j = 2; j <= 4; j++) {
+        auto name = fmt::format("float{}x{}", i, j);
+        m_type_table[name] = std::make_unique<types::Scalar>(name);
+      }
+    }
+
+    m_type_table["double"] = std::make_unique<types::Scalar>("double");
+    
+    for (auto i = 2; i <= 4; i++) {
+      auto name = fmt::format("double{}", i);
+      m_type_table[name] = std::make_unique<types::Scalar>(name);
+
+      for (auto j = 2; j <= 4; j++) {
+        auto name = fmt::format("double{}x{}", i, j);
+        m_type_table[name] = std::make_unique<types::Scalar>(name);
+      }
+    }
+
+    m_type_table["uint"] = std::make_unique<types::Scalar>("float");
+    
+    for (auto i = 2; i <= 4; i++) {
+      auto name = fmt::format("uint{}", i);
+      m_type_table[name] = std::make_unique<types::Scalar>(name);
+
+      for (auto j = 2; j <= 4; j++) {
+        auto name = fmt::format("uint{}x{}", i, j);
+        m_type_table[name] = std::make_unique<types::Scalar>(name);
+      }
+    }
+
+    m_type_table["int"] = std::make_unique<types::Scalar>("float");
+    
+    for (auto i = 2; i <= 4; i++) {
+      auto name = fmt::format("int{}", i);
+      m_type_table[name] = std::make_unique<types::Scalar>(name);
+
+      for (auto j = 2; j <= 4; j++) {
+        auto name = fmt::format("int{}x{}", i, j);
+        m_type_table[name] = std::make_unique<types::Scalar>(name);
+      }
+    }
   }
 
   types::Type* Mgr::findType(const std::string& type)
@@ -99,12 +146,14 @@ namespace kate::tlr::types {
     return (it != m_type_table.end()) ? it->second.get() : nullptr;
   }
 
-  void Mgr::addType(
+  types::Type* Mgr::addType(
     const std::string& name,
     std::unique_ptr<Type>&& type
   )
   {
+    auto ptr = type.get();
     m_type_table[name] = std::move(type);
+    return ptr;
   }
 
   Mgr& system()
@@ -112,9 +161,19 @@ namespace kate::tlr::types {
     static Mgr mgr;
     return mgr;
   }
+
+  Scalar::Scalar(const std::string& name) : m_name { name }
+  {
+  }
+
+  std::string Scalar::mangledName() const
+  {
+    return m_name;
+  }
 }
 
 TS_RTTI_TYPE(kate::tlr::types::Type)
 TS_RTTI_TYPE(kate::tlr::types::Mat)
 TS_RTTI_TYPE(kate::tlr::types::Array)
 TS_RTTI_TYPE(kate::tlr::types::Custom)
+TS_RTTI_TYPE(kate::tlr::types::Scalar)

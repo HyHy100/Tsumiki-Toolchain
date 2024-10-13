@@ -88,9 +88,6 @@ namespace kate::tlr {
         [&](ast::VarStat* var_stat) {
           resolve(var_stat);
         },
-        [&](ast::CallStat* call_stat) {
-          resolve(call_stat);
-        },
         [&](ast::ExprStat* expr_stat) {
           resolve(expr_stat);
         },
@@ -135,13 +132,20 @@ namespace kate::tlr {
 
   void Resolver::resolve(ast::VarStat* var_stat)
   {
-    if (var_stat->expr())
+    if (var_stat->expr()) {
       resolve(var_stat->expr().get());
-  }
 
-  void Resolver::resolve(ast::CallStat* call_stat)
-  {
-    resolve(call_stat->expr()->id().get());
+      // if variable declaration statement is missing a type,
+      // then we try to infer it from initializer.
+      if (!var_stat->decl()->type()) {
+        auto ty = var_stat->expr()->sem()->type();
+        
+        auto sem = std::make_unique<sem::Expr>(var_stat->expr().get());
+        sem->setType(ty);
+
+        var_stat->decl()->type()->setSem(std::move(sem));
+      }
+    }
   }
 
   void Resolver::resolve(ast::ExprStat* expr_stat)
@@ -189,7 +193,17 @@ namespace kate::tlr {
 
   types::Type* Resolver::resolve(ast::ArrayType* array_type)
   {
-    return resolve(array_type->type().get());
+    auto subty = resolve(array_type->type().get());
+
+    const auto name = subty->mangledName() + "[]";
+
+    if (auto ty = types::system().findType(name))
+      return ty;
+
+    return types::system().addType(
+      name,
+      std::make_unique<types::Array>(subty, 100)
+    );
   }
 
   types::Type* Resolver::resolve(ast::TypeId* type_id)
@@ -197,7 +211,10 @@ namespace kate::tlr {
     if (auto ty = types::system().findType(type_id->id()))
       return ty;
 
-    return nullptr;
+    return types::system().addType(
+      type_id->id(), 
+      std::make_unique<types::Scalar>(type_id->id())
+    );
   }
 
   void Resolver::resolve(ast::Expr* expr)
@@ -229,24 +246,30 @@ namespace kate::tlr {
   {
     lit->setSem(std::make_unique<sem::Expr>(lit));
 
-    switch (lit->type()) {
-      case ast::LitExpr::Type::kF32:
-        lit->sem()->setType(types::system().findType("f32"));
+    switch (lit->value().type) {
+      case ast::LitExpr::Value::Type::kF32:
+        lit->sem()->setType(types::system().findType("float"));
         break;
-      case ast::LitExpr::Type::kF64:
-        lit->sem()->setType(types::system().findType("f64"));
+      case ast::LitExpr::Value::Type::kF64:
+        lit->sem()->setType(types::system().findType("double"));
         break;
-      case ast::LitExpr::Type::kI32:
-        lit->sem()->setType(types::system().findType("i32"));
+      case ast::LitExpr::Value::Type::kI16:
+        lit->sem()->setType(types::system().findType("half"));
         break;
-      case ast::LitExpr::Type::kI64:
-        lit->sem()->setType(types::system().findType("i64"));
+      case ast::LitExpr::Value::Type::kU16:
+        lit->sem()->setType(types::system().findType("uhalf"));
         break;
-      case ast::LitExpr::Type::kU32:
-        lit->sem()->setType(types::system().findType("u32"));
+      case ast::LitExpr::Value::Type::kI32:
+        lit->sem()->setType(types::system().findType("int"));
         break;
-      case ast::LitExpr::Type::kU64:
-        lit->sem()->setType(types::system().findType("u64"));
+      case ast::LitExpr::Value::Type::kI64:
+        lit->sem()->setType(types::system().findType("long"));
+        break;
+      case ast::LitExpr::Value::Type::kU32:
+        lit->sem()->setType(types::system().findType("uint"));
+        break;
+      case ast::LitExpr::Value::Type::kU64:
+        lit->sem()->setType(types::system().findType("ulong"));
         break;
       default:
         assert(false);

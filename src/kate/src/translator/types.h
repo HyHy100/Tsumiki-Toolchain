@@ -50,6 +50,17 @@ namespace kate::tlr::types {
     size_t m_count;
   };
 
+  class Scalar : public base::rtti::Castable<Scalar, Type> {
+  public:
+    Scalar() = delete;
+
+    Scalar(const std::string& name);
+
+    std::string mangledName() const override;
+  private:
+    std::string m_name;
+  };
+
   class Custom : public base::rtti::Castable<Custom, Type> {
   public:
     class Member { 
@@ -87,7 +98,7 @@ namespace kate::tlr::types {
 
     Type* findType(const std::string& name);
     
-    void addType(
+    types::Type* addType(
       const std::string& name,
       std::unique_ptr<Type>&& type
     );

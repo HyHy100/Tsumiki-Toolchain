@@ -379,22 +379,6 @@ namespace kate::tlr {
 
     return Failure::kNoMatch;
   }
- 
-  Result<ast::CRef<ast::CallStat>> Parser::call_statement()
-  {
-    auto call_expr_ = call_expr();
-
-    if (call_expr_.errored)
-      return Failure::kError;
-
-    if (!call_expr_.matched)
-      return Failure::kNoMatch;
-
-    if (!matches(Token::Type::kSemicolon)) 
-      return error("missing ';' after function call statement.");
-
-    return ast::context().make<ast::CallStat>(std::move(call_expr_.value));
-  }
 
   Result<ast::CRef<ast::IfStat>> Parser::if_statement()
   {
@@ -474,18 +458,6 @@ namespace kate::tlr {
 
     if (stat.matched) return std::move(stat);
 
-    stat = call_statement();
-
-    if (stat.errored) return Failure::kError;
-
-    if (stat.matched) {
-      for (auto& arg : stat->as<ast::CallStat>()->expr()->args()) {
-        assert(arg.get());
-      }  
-      assert(false);
-      return std::move(stat);
-    }
-
     // try a expression statement.
     // expression should always be the last ones to be parsed here.
     stat = parse_expr_stat();
@@ -547,48 +519,37 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::LitExpr>> Parser::literal_expr()
   {
-    if (auto tok = matches(Token::Type::kInt16))
-      return ast::context().make<ast::LitExpr>(
-        ast::LitExpr::Type::kI32,
-        tok->value_as<int64_t>()
-      );
-    else if (auto tok = matches(Token::Type::kInt32))
-      return ast::context().make<ast::LitExpr>(
-        ast::LitExpr::Type::kI32,
-        tok->value_as<int64_t>()
-      );
-    else if (auto tok = matches(Token::Type::kInt64))
-      return ast::context().make<ast::LitExpr>(
-        ast::LitExpr::Type::kI64,
-        tok->value_as<int64_t>()
-      );
-    else if (auto tok = matches(Token::Type::kUint16))
-      return ast::context().make<ast::LitExpr>(
-        ast::LitExpr::Type::kU32,
-        tok->value_as<uint64_t>()
-      );
-    else if (auto tok = matches(Token::Type::kUint32))
-      return ast::context().make<ast::LitExpr>(
-        ast::LitExpr::Type::kU32,
-        tok->value_as<uint64_t>()
-      );
-    else if (auto tok = matches(Token::Type::kUint64))
-      return ast::context().make<ast::LitExpr>(
-        ast::LitExpr::Type::kU64,
-        tok->value_as<uint64_t>()
-      );
-    else if (auto tok = matches(Token::Type::kFlt32))
-      return ast::context().make<ast::LitExpr>(
-        ast::LitExpr::Type::kF32,
-        tok->value_as<double>()
-      );
-    else if (auto tok = matches(Token::Type::kFlt64))
-      return ast::context().make<ast::LitExpr>(
-        ast::LitExpr::Type::kF64,
-        tok->value_as<double>()
-      );
+    ast::LitExpr::Value value;
 
-    return Failure::kNoMatch;
+    memset(&value, 0, sizeof(value));
+
+    if (auto tok = matches(Token::Type::kInt16)) {
+        value.type = ast::LitExpr::Value::Type::kI16;
+        value.value.i16 = static_cast<int16_t>(tok->value_as<int64_t>());
+    } else if (auto tok = matches(Token::Type::kInt32)) {
+        value.type = ast::LitExpr::Value::Type::kI32;
+        value.value.i32 = static_cast<int32_t>(tok->value_as<int64_t>());
+    } else if (auto tok = matches(Token::Type::kInt64)) {
+        value.type = ast::LitExpr::Value::Type::kI64;
+        value.value.i64 = static_cast<int64_t>(tok->value_as<int64_t>());
+    } else if (auto tok = matches(Token::Type::kUint16)) {
+        value.type = ast::LitExpr::Value::Type::kU16;
+        value.value.u16 = static_cast<uint16_t>(tok->value_as<uint64_t>());
+    } else if (auto tok = matches(Token::Type::kUint32)) {
+        value.type = ast::LitExpr::Value::Type::kU32;
+        value.value.u32 = static_cast<uint32_t>(tok->value_as<uint64_t>());
+    } else if (auto tok = matches(Token::Type::kUint64)) {
+        value.type = ast::LitExpr::Value::Type::kU64;
+        value.value.u64 = static_cast<uint64_t>(tok->value_as<uint64_t>());
+    } else if (auto tok = matches(Token::Type::kFlt32)) {
+        value.type = ast::LitExpr::Value::Type::kF32;
+        value.value.f32 = static_cast<float>(tok->value_as<double>());
+    } else if (auto tok = matches(Token::Type::kFlt64)) {
+        value.type = ast::LitExpr::Value::Type::kF64;
+        value.value.f64 = static_cast<double>(tok->value_as<double>());
+    } else return Failure::kNoMatch;
+
+    return ast::context().make<ast::LitExpr>(value);
   }
 
   Result<ast::CRef<ast::UnaryExpr>> Parser::unary_expr()

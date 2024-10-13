@@ -50,7 +50,7 @@ namespace kate::tlr {
 
   void GLSLPrinter::print(ast::StructDecl* struct_)
   {
-    out() << "struct " << struct_->name() << "{\n";
+    out() << "struct " << struct_->name() << " {\n";
     for (auto& m : struct_->members()) {
       out() << "\t";
 
@@ -116,7 +116,8 @@ namespace kate::tlr {
   {
     auto& var_type = var_stat->decl()->type();
 
-    if (var_type) print(var_type.get());
+    if (var_type) 
+      print(var_type.get());
 
     out() << " " << var_stat->decl()->name();
 
@@ -126,12 +127,6 @@ namespace kate::tlr {
       print(var_stat->expr().get());
     }
 
-    out() << ";\n";
-  }
-
-  void GLSLPrinter::print(ast::CallStat* call_stat)
-  {
-    print(call_stat->expr().get());
     out() << ";\n";
   }
 
@@ -202,9 +197,6 @@ namespace kate::tlr {
       [&](ast::VarStat* var_stat) {
         print(var_stat);
       },
-      [&](ast::CallStat* call_stat) {
-        print(call_stat);
-      },
       [&](ast::ExprStat* expr_stat) {
         print(expr_stat);
       },
@@ -259,24 +251,30 @@ namespace kate::tlr {
   {
     auto v = lit->value();
 
-    switch (lit->type()) {
-      case ast::LitExpr::Type::kI32:
-        out() << *(int32_t*)&v;
+    switch (v.type) {
+      case ast::LitExpr::Value::Type::kI16:
+        out() << v.value.i16;
         break;
-      case ast::LitExpr::Type::kI64:
-        out() << *(int64_t*)&v;
+      case ast::LitExpr::Value::Type::kU16:
+        out() << v.value.u16;
         break;
-      case ast::LitExpr::Type::kF32:
-        out() << *(float*)&v;
+      case ast::LitExpr::Value::Type::kI32:
+        out() << v.value.i32;
         break;
-      case ast::LitExpr::Type::kF64:
-        out() << *(double*)&v;
+      case ast::LitExpr::Value::Type::kI64:
+        out() << v.value.i64;
         break;
-      case ast::LitExpr::Type::kU32:
-        out() << *(uint32_t*)&v;
+      case ast::LitExpr::Value::Type::kF32:
+        out() << v.value.f32;
         break;
-      case ast::LitExpr::Type::kU64:
-        out() << *(uint64_t*)&v;
+      case ast::LitExpr::Value::Type::kF64:
+        out() << v.value.f64;
+        break;
+      case ast::LitExpr::Value::Type::kU32:
+        out() << v.value.u32;
+        break;
+      case ast::LitExpr::Value::Type::kU64:
+        out() << v.value.u64;
         break;
       default:
         assert(false);
@@ -304,10 +302,10 @@ namespace kate::tlr {
         out() << " % ";
         break;
       case ast::BinaryExpr::Type::kMemberAccess:
-        out() << " . ";
+        out() << ".";
         break;
       case ast::BinaryExpr::Type::kSwizzle:
-        out() << " . ";
+        out() << ".";
         break;
       case ast::BinaryExpr::Type::kCompoundAdd:
         out() << " += ";

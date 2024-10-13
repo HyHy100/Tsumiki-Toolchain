@@ -37,8 +37,6 @@ namespace kate::tlr::ast {
     CRef(uint64_t id) 
     {
       m_id = id;
-
-      fmt::println("info: Creating AST node reference to ID '{}'.", m_id);
     }
 
     CRef(const CRef<T>&) = delete;
@@ -47,8 +45,6 @@ namespace kate::tlr::ast {
     {
       m_id = rhs.m_id;
       rhs.m_id = std::numeric_limits<uint64_t>::max();
-
-      fmt::println("info: Moving AST node.. New ID '{}' RHS ID: '{}'.", m_id, rhs.m_id);
     }
     
     template<typename U>
@@ -109,8 +105,6 @@ namespace kate::tlr::ast {
       auto id = getID();
 
       m_ctx[id] = std::make_unique<_Ty>(std::forward<_Types>(_Args)...);
-
-      fmt::println("make() of id {}.", id);
 
       return CRef<_Ty>(id);
     }
@@ -288,58 +282,39 @@ namespace kate::tlr::ast {
 
   class LitExpr : public base::rtti::Castable<LitExpr, Expr> {
   public:
-    enum class Type {
-      kI32,
-      kI64,
-      kU32,
-      kU64,
-      kF32,
-      kF64
+    struct Value {
+      enum class Type {
+        kI16,
+        kU16,
+        kI32,
+        kI64,
+        kU32,
+        kU64,
+        kF32,
+        kF64
+      };
+
+      Type type;
+
+      union {
+        float     f32;
+        double    f64;
+        int64_t   i64;
+        uint64_t  u64;
+        int32_t   i32;
+        uint32_t  u32;
+        int16_t   i16;
+        uint16_t  u16;
+      } value;
     };
 
-    template<typename T, typename V = std::decay_t<T>>
-    LitExpr(Type type, V value)
-    {
-      switch (type) {
-        case Type::kU32:
-          //assert(std::is_same_v<V, uint32_t>);
-          m_value = value;
-          break;
-        case Type::kU64:
-          //assert(std::is_same_v<V, uint64_t>);
-          m_value = value;
-          break;
-        case Type::kI32:
-          //assert(std::is_same_v<V, int32_t>);
-          m_value = reinterpret_cast<uint32_t>(value);
-          break;
-        case Type::kI64:
-          //assert(std::is_same_v<V, int64_t>);
-          m_value = reinterpret_cast<uint64_t>(value);
-          break;
-        case Type::kF32:
-          //assert(std::is_same_v<V, float>);
-          m_value = reinterpret_cast<uint64_t>(value);
-          break;
-        case Type::kF64:
-          //assert(std::is_same_v<V, double>);
-          m_value = reinterpret_cast<uint64_t>(value);
-          break;
-      }
-
-      m_type = type;
-    }
-
-    LitExpr(Type type, uint64_t value);
-
-    Type type() const;
+    LitExpr(const Value& value);
 
     ast::CRef<ast::TreeNode> clone() override;
 
-    uint64_t value() const;
+    Value& value();
   private:
-    Type m_type;
-    uint64_t m_value;
+    Value m_value;
   };
 
   class UnaryExpr final : public base::rtti::Castable<UnaryExpr, Expr> {
@@ -713,19 +688,6 @@ namespace kate::tlr::ast {
   private:
     CRef<IdExpr> m_id;
     std::vector<CRef<Expr>> m_args;
-  };
-
-  class CallStat final : public base::rtti::Castable<CallStat, Stat> {
-  public:
-    CallStat(
-      CRef<CallExpr>&& call_expr
-    );
-
-    CRef<TreeNode> clone() override;
-
-    CRef<CallExpr>& expr();
-  private:
-    CRef<CallExpr> m_call_expr;
   };
 
   class WhileStat final : public base::rtti::Castable<WhileStat, Stat> {

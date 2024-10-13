@@ -28,8 +28,6 @@ namespace kate::tlr {
 
     void print(ast::VarStat* var_stat);
 
-    void print(ast::CallStat* call_stat);
-
     void print(ast::ExprStat* expr_stat);
 
     void print(ast::BreakStat* break_stat);
