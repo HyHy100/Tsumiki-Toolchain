@@ -87,7 +87,10 @@
       "regex": "cpp",
       "any": "cpp",
       "*.hpp11": "cpp",
-      "future": "cpp"
+      "future": "cpp",
+      "charconv": "cpp",
+      "forward_list": "cpp",
+      "list": "cpp"
     },
     "cmake.sourceDirectory": "/home/hyhy100/work/Tsumiki-Toolchain/src/third_party/khronos/glslang"
 }

@@ -31,12 +31,14 @@ namespace kate::tlr::ast {
   public:
     CRef()
     {
-      m_id = std::numeric_limits<decltype(m_id)>::max();
+      m_id = std::numeric_limits<uint64_t>::max();
     }
 
     CRef(uint64_t id) 
     {
       m_id = id;
+
+      fmt::println("info: Creating AST node reference to ID '{}'.", m_id);
     }
 
     CRef(const CRef<T>&) = delete;
@@ -44,20 +46,22 @@ namespace kate::tlr::ast {
     CRef(CRef<T>&& rhs)
     {
       m_id = rhs.m_id;
-      rhs.m_id = std::numeric_limits<decltype(m_id)>::max();
+      rhs.m_id = std::numeric_limits<uint64_t>::max();
+
+      fmt::println("info: Moving AST node.. New ID '{}' RHS ID: '{}'.", m_id, rhs.m_id);
     }
     
     template<typename U>
     CRef(CRef<U>&& rhs)
     {
       m_id = rhs.m_id;
-      rhs.m_id = std::numeric_limits<decltype(m_id)>::max();
+      rhs.m_id = std::numeric_limits<uint64_t>::max();
     }
 
     void operator=(CRef<T>&& rhs)
     {
       m_id = rhs.m_id;
-      rhs.m_id = std::numeric_limits<decltype(m_id)>::max();
+      rhs.m_id = std::numeric_limits<uint64_t>::max();
     }
 
     void operator=(const CRef<T>&) = delete;
@@ -71,7 +75,7 @@ namespace kate::tlr::ast {
     CRef<U> convertTo()
     {
       auto id = m_id;
-      m_id = std::numeric_limits<decltype(m_id)>::max();
+      m_id = std::numeric_limits<uint64_t>::max();
       return CRef<U>(id);
     }
 
@@ -79,7 +83,7 @@ namespace kate::tlr::ast {
 
     operator bool() const
     {
-      return m_id != std::numeric_limits<decltype(m_id)>::max();
+      return m_id != std::numeric_limits<uint64_t>::max();
     }
 
     uint64_t m_id;
@@ -106,16 +110,18 @@ namespace kate::tlr::ast {
 
       m_ctx[id] = std::make_unique<_Ty>(std::forward<_Types>(_Args)...);
 
+      fmt::println("make() of id {}.", id);
+
       return CRef<_Ty>(id);
     }
 
     void remove(uint64_t id)
     {
-      auto it = m_ctx.find(id);
+      /*auto it = m_ctx.find(id);
 
       if (it == m_ctx.end()) return;
 
-      m_ctx.erase(it);
+      m_ctx.erase(it);*/
     }
 
     bool swap(TreeNode* src, TreeNode* dst) 
@@ -195,7 +201,8 @@ namespace kate::tlr::ast {
     {
       std::vector<TreeNode*> nodes;
 
-      for (auto& [_, ptr] : m_ctx) nodes.push_back(ptr.get());
+      for (auto& [_, ptr] : m_ctx) 
+        nodes.push_back(ptr.get());
 
       for (auto& ptr : nodes) {        
         if (T* cptr = ptr->as<T>()) {
@@ -209,12 +216,7 @@ namespace kate::tlr::ast {
       m_ctx = std::unordered_map<uint64_t, std::unique_ptr<TreeNode>>();
     }
   private:
-    uint64_t getID()
-    {
-      static uint64_t id = 0;
-
-      return id++;
-    }
+    uint64_t getID();
 
     std::unordered_map<uint64_t, std::unique_ptr<TreeNode>> m_ctx;
   };
@@ -333,6 +335,8 @@ namespace kate::tlr::ast {
     Type type() const;
 
     ast::CRef<ast::TreeNode> clone() override;
+
+    uint64_t value() const;
   private:
     Type m_type;
     uint64_t m_value;
@@ -355,6 +359,8 @@ namespace kate::tlr::ast {
     CRef<TreeNode> clone() override;
 
     CRef<Expr>& operand();
+
+    Type type() const;
   private:
     Type m_type;
     CRef<Expr> m_operand;
@@ -449,6 +455,8 @@ namespace kate::tlr::ast {
       kFragment,
       kWorkgroupSize,
       kLocation,
+      kInput,
+      kBuiltin,
       kCount
     };
 
@@ -485,6 +493,7 @@ namespace kate::tlr::ast {
   class FuncDecl final : public base::rtti::Castable<FuncDecl, Decl> {
   public:
     FuncDecl(
+      CRef<Type>&& type,
       const std::string& name,
       CRef<BlockStat>&& block,
       std::vector<CRef<FuncArg>>&& args = {},
@@ -498,12 +507,16 @@ namespace kate::tlr::ast {
     CRef<BlockStat>& block();
 
     std::vector<CRef<FuncArg>>& args();
+
+    CRef<Type>& type();
   private:
     std::vector<CRef<FuncArg>> m_args;
 
     std::vector<CRef<Attr>> m_attrs;
 
     CRef<BlockStat> m_block;
+
+    CRef<Type> m_type;
   };
 
   class VarDecl final : public base::rtti::Castable<VarDecl, Decl> {
@@ -763,7 +776,8 @@ namespace kate::tlr::ast {
     BufferDecl(
       const std::string& name,
       BufferArgs args,
-      CRef<Type>&& type
+      CRef<Type>&& type,
+      std::vector<CRef<Attr>>&& attributes
     );
 
     CRef<TreeNode> clone() override;
@@ -771,9 +785,12 @@ namespace kate::tlr::ast {
     CRef<Type>& type();
 
     const BufferArgs& args() const;
+    
+    std::vector<CRef<Attr>>& attributes();
   private:
     BufferArgs m_args;
     CRef<Type> m_type;
+    std::vector<CRef<Attr>> m_attributes;
   };
 
   class UniformDecl final : public base::rtti::Castable<UniformDecl, Decl> {

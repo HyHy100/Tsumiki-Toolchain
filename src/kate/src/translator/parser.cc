@@ -120,7 +120,6 @@ namespace kate::tlr {
           case Token::Type::kMinus:
           case Token::Type::kAsterisk:
           case Token::Type::kSlash:
-          case Token::Type::kComma:
           case Token::Type::kPercent:
           case Token::Type::kPlus:
           case Token::Type::kDot:
@@ -242,6 +241,9 @@ namespace kate::tlr {
 
     auto expr_list = parse_expression_list();
 
+    for (auto& e : expr_list.value) 
+      assert(e.get());
+
     if (expr_list.errored) return Failure::kError;
 
     if (!matches(Token::Type::kRightParen))
@@ -249,7 +251,7 @@ namespace kate::tlr {
   
     return ast::context().make<ast::CallExpr>(
       std::move(identifier),
-      std::move(expr_list)
+      std::move(expr_list.value)
     );
   }
 
@@ -340,9 +342,11 @@ namespace kate::tlr {
       if (matches(Token::Type::kColon)) {
         auto type_result = expect_type();
 
-        if (type_result.errored) return Failure::kError;
+        if (type_result.errored) 
+          return Failure::kError;
 
-        if (!type_result.matched) return error("missing type after ':' in variable declaration statement.");
+        if (!type_result.matched) 
+          return error("missing type after ':' in variable declaration statement.");
 
         type = std::move(type_result.value);
       }
@@ -352,7 +356,8 @@ namespace kate::tlr {
       if (matches(Token::Type::kEqual)) {
         auto initializer_result = parse_expr();
 
-        if (initializer_result.errored) return Failure::kError;
+        if (initializer_result.errored) 
+          return Failure::kError;
 
         if (!initializer_result.matched) 
           error("missing initializer expression after '=' in variable statement.");
@@ -385,9 +390,10 @@ namespace kate::tlr {
     if (!call_expr_.matched)
       return Failure::kNoMatch;
 
-    if (!matches(Token::Type::kSemicolon)) return error("missing ';' after function call statement.");
+    if (!matches(Token::Type::kSemicolon)) 
+      return error("missing ';' after function call statement.");
 
-    return call_expr_;
+    return ast::context().make<ast::CallStat>(std::move(call_expr_.value));
   }
 
   Result<ast::CRef<ast::IfStat>> Parser::if_statement()
@@ -472,7 +478,13 @@ namespace kate::tlr {
 
     if (stat.errored) return Failure::kError;
 
-    if (stat.matched) return std::move(stat);
+    if (stat.matched) {
+      for (auto& arg : stat->as<ast::CallStat>()->expr()->args()) {
+        assert(arg.get());
+      }  
+      assert(false);
+      return std::move(stat);
+    }
 
     // try a expression statement.
     // expression should always be the last ones to be parsed here.
@@ -515,7 +527,7 @@ namespace kate::tlr {
     if (!expr.matched) return Failure::kNoMatch;
 
     std::vector<ast::CRef<ast::Expr>> expr_list;
-    expr_list.push_back(expr);
+    expr_list.push_back(std::move(expr.value));
 
     while (matches(Token::Type::kComma)) {
       expr = parse_expr();
@@ -523,7 +535,11 @@ namespace kate::tlr {
       if (!expr.matched)
         return error("missing a expression after ',' while parsing a expression list.");
 
-      expr_list.push_back(expr);
+      expr_list.push_back(std::move(expr.value));
+    }
+
+    for (auto& e : expr_list) {
+      assert(e.get());
     }
 
     return expr_list;
@@ -632,29 +648,31 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::Expr>> Parser::primary_expr()
   {
-    auto unary_expr_ = unary_expr();
+    Result<ast::CRef<ast::Expr>> expr;
 
-    if (unary_expr_.matched) return unary_expr_;
+    expr = unary_expr();
 
-    if (unary_expr_.errored) return Failure::kError;
+    if (expr.matched) return expr;
 
-    auto litexpr = literal_expr();
+    if (expr.errored) return Failure::kError;
+
+    expr = call_expr();
+
+    if (expr.matched) return expr;
+
+    if (expr.errored) return Failure::kError;
+
+    expr = literal_expr();
     
-    if (litexpr.matched) return litexpr;
+    if (expr.matched) return expr;
 
-    if (litexpr.errored) return Failure::kError;
+    if (expr.errored) return Failure::kError;
 
-    auto call_expr_ = call_expr();
-
-    if (call_expr_.matched) return call_expr_;
-
-    if (call_expr_.errored) return Failure::kError;
-
-    auto idexpr = identifier_expr(); 
+    expr = identifier_expr(); 
     
-    if (idexpr.matched) return idexpr;
+    if (expr.matched) return expr;
 
-    if (idexpr.errored) return Failure::kError;
+    if (expr.errored) return Failure::kError;
 
     return Failure::kNoMatch;
   }
@@ -939,6 +957,10 @@ namespace kate::tlr {
         type = ast::Attr::Type::kBinding;
       else if (ident.value == "location")
         type = ast::Attr::Type::kLocation;
+      else if (ident.value == "input")
+        type = ast::Attr::Type::kInput;
+      else if (ident.value == "builtin")
+        type = ast::Attr::Type::kBuiltin;
       else 
         return error(fmt::format("unknown attribute '{}'.", ident.value));
 
@@ -956,7 +978,7 @@ namespace kate::tlr {
       attribute_list.push_back(
         ast::context().make<ast::Attr>(
           type,
-          expr_list.unwrap()
+          std::move(expr_list.value)
         )
       );
     }
@@ -976,7 +998,9 @@ namespace kate::tlr {
       if (!matches(Token::Type::kSemicolon))
         return error("missing ';' after 'return' statement.");
 
-      return ast::context().make<ast::ReturnStat>(std::move(expr.value));
+      auto ret = ast::context().make<ast::ReturnStat>(std::move(expr.value));
+
+      return std::move(ret);
     }
 
     return Failure::kNoMatch;
@@ -989,6 +1013,9 @@ namespace kate::tlr {
     if (matches("uniform")) {
       auto name = parse_name();
 
+      if (name.errored) 
+        return Failure::kError;
+
       if (!name.matched) 
         return error("missing name in uniform declaration.");
 
@@ -996,6 +1023,9 @@ namespace kate::tlr {
         return error("missing ':' after uniform name.");
 
       auto type = expect_type();
+
+      if (type.errored) 
+        return Failure::kError;
 
       if (!type.matched)
         return error("missing type in uniform declaration.");
@@ -1057,7 +1087,8 @@ namespace kate::tlr {
       return ast::context().make<ast::BufferDecl>(
         name,
         args,
-        std::move(type)
+        std::move(type),
+        std::move(attributes)
       );
     }
 
@@ -1080,6 +1111,10 @@ namespace kate::tlr {
       std::vector<ast::CRef<ast::FuncArg>> function_args;
 
       while (should_continue() && !matches(Token::Type::kRightParen)) {
+        auto attrs = parse_attributes();
+
+        if (attrs.errored) return Failure::kError;
+
         auto ident = parse_name();
 
         if (!ident.matched) 
@@ -1126,6 +1161,7 @@ namespace kate::tlr {
         return error("missing block in function declaration.");
 
       return ast::context().make<ast::FuncDecl>(
+        std::move(type),
         function_name,
         std::move(block.value),
         std::move(function_args)

@@ -10,6 +10,13 @@ namespace kate::tlr::ast {
     return nctx;
   }
 
+  uint64_t ASTContext::getID()
+  {
+    static uint64_t id = 0;
+    fmt::println("id: {}.", id);
+    return id++;
+  }
+
   void Decl::setSem(std::unique_ptr<sem::Decl>&& sem)
   {
     m_sem = std::move(sem);
@@ -72,6 +79,11 @@ namespace kate::tlr::ast {
     return m_type;
   }
 
+  uint64_t LitExpr::value() const
+  {
+    return m_value;
+  }
+
   ast::CRef<ast::TreeNode> LitExpr::clone()
   {
     return ast::context().make<ast::LitExpr>(m_type, m_value);
@@ -113,6 +125,11 @@ namespace kate::tlr::ast {
   CRef<Expr>& UnaryExpr::operand()
   {
     return m_operand;
+  }
+
+  UnaryExpr::Type UnaryExpr::type() const
+  {
+    return m_type;
   }
 
   BinaryExpr::BinaryExpr(
@@ -220,15 +237,22 @@ namespace kate::tlr::ast {
   }
 
   FuncDecl::FuncDecl(
+    CRef<Type>&& type,
     const std::string& name,
     CRef<BlockStat>&& block,
     std::vector<CRef<FuncArg>>&& args,
     std::vector<CRef<Attr>>&& attributes
   ) : m_attrs { std::move(attributes) },
       m_args { std::move(args) },
-      m_block { std::move(block) }
+      m_block { std::move(block) },
+      m_type { std::move(type) }
   {
     m_name = name;
+  }
+
+  CRef<Type>& FuncDecl::type()
+  {
+    return m_type;
   }
 
   CRef<BlockStat>& FuncDecl::block()
@@ -244,6 +268,7 @@ namespace kate::tlr::ast {
   CRef<TreeNode> FuncDecl::clone()
   {
     return context().make<FuncDecl>(
+      context().clone(m_type),
       m_name,
       context().clone(m_block),
       context().clone(m_args),
@@ -462,7 +487,7 @@ namespace kate::tlr::ast {
     CRef<IdExpr>&& id,
     std::vector<CRef<Expr>>&& args
   ) : m_id { std::move(id) },
-    m_args { std::move(args) }
+      m_args { std::move(args) }
   {
   }
 
@@ -605,11 +630,18 @@ namespace kate::tlr::ast {
   BufferDecl::BufferDecl(
     const std::string& name,
     BufferArgs args,
-    CRef<Type>&& type
+    CRef<Type>&& type,
+    std::vector<CRef<Attr>>&& attributes
   ) : m_args { std::move(args) },
-    m_type { std::move(type) }
+    m_type { std::move(type) },
+    m_attributes { std::move(attributes) }
   {
     m_name = name;
+  }
+
+  std::vector<CRef<Attr>>& BufferDecl::attributes()
+  {
+    return m_attributes;
   }
 
   CRef<TreeNode> BufferDecl::clone()
@@ -617,7 +649,8 @@ namespace kate::tlr::ast {
     return context().make<BufferDecl>(
       m_name,
       m_args,
-      context().clone(m_type)
+      context().clone(m_type),
+      context().clone(m_attributes)
     );
   }
 

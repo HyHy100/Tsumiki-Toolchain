@@ -1,6 +1,8 @@
 #include "parser.h"
 #include "resolver.h"
 
+#include "printers/glsl.h"
+
 #include <fmt/format.h>
 
 namespace kate::tlr {
@@ -13,35 +15,45 @@ namespace kate::tlr {
       .error_callback = error_callback
     });
 
-    auto module = parser.parse(R"(@group(0) @binding(0) 
-    buffer<read> buffer1: float;
+    auto module = parser.parse(R"(struct VertexOutput {
+      @location(0) position : float4,
+      @location(1) normal: float3
+    }
 
-    buffer<read> buffer2: [][64]{
-      a: float,
-      b: float
-    };
+    @vertex
+    fn vertex_main(
+      @builtin(position) vertex_position : float3
+    ): VertexOutput {
+      return VertexOutput(
+        float4(vertex_position, 1.0),
+        float3(1.0)
+      );
+    }
 
-    struct Output {
+    struct FragmentOutput {
       @location(0) color : float4,
-      @location(1) normal: float4
+      @location(1) normal : float3,
+      @location(2) position : float3
     }
 
     @fragment
-    fn main(): Output {
-      if buffer2[55][2] + 9 + 7 + 9 + 5 > 12 {
-        66 + 88 + 99;
-      }
+    fn fragment_main(
+      @input fragment_input: VertexOutput
+    ): FragmentOutput {
+      var white_color = float4(1.0);
 
-      var a = 66;
-
-      return Output(
-        vec4f(1.0, 0.0, 0.0, 1.0),
-        vec3f(1.0, 0.0, 0.0)
+      return FragmentOutput(
+        white_color,
+        fragment_input.normal,
+        fragment_input.position
       );
     })");
 
-    Resolver resolver;
-    resolver.resolve(module.get());
+    /*Resolver resolver;
+    resolver.resolve(module.get());*/
+
+    GLSLPrinter printer;
+    printer.print(module.get());
 
     return 0;
   }

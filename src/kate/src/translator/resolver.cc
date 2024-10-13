@@ -21,6 +21,9 @@ namespace kate::tlr {
         [&](ast::VarDecl* var_decl) {
           resolve(var_decl->type().get());
         },
+        [&](ast::UniformDecl* uniform_decl) {
+          // ...
+        },
         [&](base::Default) {
           assert(false);
         }
@@ -37,8 +40,9 @@ namespace kate::tlr {
   {
     for (auto& m : struct_->members()) {
       for (auto& m2 : struct_->members())
-        if (&m2 != &m && m2->name() == m->name())
+        if (&m2 != &m && m2->name() == m->name()) {
           assert(false); // duplicate member name.
+        }
 
       resolve(m->type().get());
     }
