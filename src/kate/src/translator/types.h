@@ -67,6 +67,24 @@ namespace kate::tlr::types {
     std::string m_name;
   };
 
+  class Vec : public base::rtti::Castable<Vec, Type> {
+  public:
+    Vec() = delete;
+
+    Vec(Type* type, size_t columns);
+
+    size_t columns() const;
+
+    Type* type();
+
+    std::string mangledName() const override;
+
+    uint64_t numSlots() const override;
+  private:
+    Type* m_type;
+    size_t m_columns;
+  };
+
   class Custom : public base::rtti::Castable<Custom, Type> {
   public:
     class Member { 

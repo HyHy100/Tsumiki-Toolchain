@@ -497,7 +497,7 @@ namespace kate::tlr {
             auto* arg_type = arg->sem()->type();
 
             // Only matrix / scalar / vector types are allowed here.
-            if (!(arg_type->is<types::Mat>() || arg_type->is<types::Scalar>()/* || arg_type->is<types::Vec>()*/)) {
+            if (!(arg_type->is<types::Mat>() || arg_type->is<types::Scalar>() || arg_type->is<types::Vec>())) {
               // TODO: Handle error.
               assert(false);
               return;
