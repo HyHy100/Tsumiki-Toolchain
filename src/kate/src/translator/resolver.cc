@@ -140,13 +140,18 @@ namespace kate::tlr {
         return lhs * rhs;
       case ast::BinaryExpr::Type::kDiv:
         return lhs / rhs;
-      case ast::BinaryExpr::Type::kBitXor:
-        return lhs ^ rhs;
-      case ast::BinaryExpr::Type::kBitOr:
-        return lhs | rhs;
-      case ast::BinaryExpr::Type::kBitAnd:
-        return lhs & rhs;
       default:
+        if constexpr (std::is_integral_v<T>) {
+          switch (type) {
+            case ast::BinaryExpr::Type::kBitXor:
+              return lhs ^ rhs;
+            case ast::BinaryExpr::Type::kBitOr:
+              return lhs | rhs;
+            case ast::BinaryExpr::Type::kBitAnd:
+              return lhs & rhs;
+          }
+        }
+
         return std::nullopt;
     }
   }
@@ -440,8 +445,75 @@ namespace kate::tlr {
 
   void Resolver::resolve(ast::CallExpr* callexpr)
   {
-    for (auto& arg : callexpr->args())
+    auto name = callexpr->id()->ident();
+
+    auto& call_args = callexpr->args();
+
+    for (auto& arg : call_args)
       resolve(arg.get());
+
+    if (auto* constructor_type = types::system().findType(name)) {
+      if (auto* array_type = constructor_type->as<types::Array>()) {
+        // TODO: Handle error.
+        // Array constructores are not supported yet.
+        assert(false);
+        return;
+      } else if (auto* user_type = constructor_type->as<types::Custom>()) {
+        auto& members = user_type->members();
+        
+        if (members.size() != call_args.size()) {
+          // TODO: Handle error.
+          assert(false);
+          return;
+        }
+
+        for (size_t i = 0; i < members.size(); i++) {
+          // check if types are compatible
+          if (members[i].type()->mangledName() != call_args[i]->sem()->type()->mangledName()) {
+            // TODO: Handle error.
+            assert(false);
+            return;
+          }  
+        }
+      } else {
+        // If it's a scalar.
+        if (constructor_type->numSlots() == 1) {
+          if (call_args.size() > 1) {
+            // TODO: Handle error.
+            assert(false);
+            return;
+          }
+
+          // then check if the only arguments is of the same type of the constructor identifier.
+          if (call_args[0]->sem()->type() != constructor_type) {
+            assert(false);
+            return;
+          }
+        } else {
+          // otherwise we have a mat/vec
+          uint64_t num_scalars_in_arguments = 0;
+
+          for (auto& arg : call_args) {
+            auto* arg_type = arg->sem()->type();
+
+            // Only matrix / scalar / vector types are allowed here.
+            if (!(arg_type->is<types::Mat>() || arg_type->is<types::Scalar>()/* || arg_type->is<types::Vec>()*/)) {
+              // TODO: Handle error.
+              assert(false);
+              return;
+            }
+
+            num_scalars_in_arguments += arg->sem()->type()->numSlots();
+          }
+
+          if (num_scalars_in_arguments != constructor_type->numSlots()) {
+            // TODO: Handle error.
+            assert(false);
+            return;
+          }
+        }
+      }
+    }    
   }
 
   void Resolver::resolve(ast::StructMember* struct_member)

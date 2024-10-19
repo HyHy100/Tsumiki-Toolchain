@@ -95,14 +95,14 @@ namespace kate::gpu {
     m_device = physical_device.createDevice(
       vk::DeviceCreateInfo(
         vk::DeviceCreateFlags { 0u },
-        queue_create_infos.size(),    // Queue create info count.
-        queue_create_infos.data(),    // Queue create pointer.
+        queue_create_infos.size(),      // Queue create info count.
+        queue_create_infos.data(),      // Queue create pointer.
         vulkan_validation_layers.size(),// Device layer count.
         vulkan_validation_layers.data(),// Device layer pointer.
         vulkan_device_extensions.size(),// Extension count.
         vulkan_device_extensions.data(),// Extension list.
-        nullptr,            // Enabled features.
-        nullptr             // pNext.
+        nullptr,                        // Enabled features.
+        nullptr                         // pNext.
       )
     );
 

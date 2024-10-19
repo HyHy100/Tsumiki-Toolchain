@@ -33,6 +33,11 @@ namespace kate::tlr::types {
     return fmt::format("{}{}x{}", m_type->mangledName(), rows(), columns()); 
   }
 
+  uint64_t Mat::numSlots() const
+  {
+    return m_type->numSlots() * m_rows * m_columns;
+  }
+
   Array::Array(Type* type, size_t count)
     : m_count { count },
       m_type { type }
@@ -193,6 +198,11 @@ namespace kate::tlr::types {
   std::string Scalar::mangledName() const
   {
     return m_name;
+  }
+
+  uint64_t Scalar::numSlots() const
+  {
+    return 1;
   }
 }
 

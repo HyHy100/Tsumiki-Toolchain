@@ -13,6 +13,8 @@ namespace kate::tlr::types {
     virtual ~Type() = default;
 
     virtual std::string mangledName() const = 0;
+
+    virtual uint64_t numSlots() const { return 0; }
   };
 
   class Mat : public base::rtti::Castable<Mat, Type> {
@@ -28,6 +30,8 @@ namespace kate::tlr::types {
     Type* type();
 
     std::string mangledName() const override;
+
+    uint64_t numSlots() const override;
   private:
     Type* m_type;
     size_t m_rows;
@@ -57,6 +61,8 @@ namespace kate::tlr::types {
     Scalar(const std::string& name);
 
     std::string mangledName() const override;
+
+    uint64_t numSlots() const override;
   private:
     std::string m_name;
   };
