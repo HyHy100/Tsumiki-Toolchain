@@ -283,28 +283,27 @@ namespace kate::tlr::ast {
   class LitExpr : public base::rtti::Castable<LitExpr, Expr> {
   public:
     struct Value {
-      enum class Type {
-        kI16,
-        kU16,
-        kI32,
-        kI64,
-        kU32,
-        kU64,
-        kF32,
-        kF64
+      enum Type {
+        kI16 = 0x1,
+        kI32 = 0x2,
+        kI64 = 0x4,
+        kU16 = 0x8,
+        kU32 = 0x10,
+        kU64 = 0x20,
+        kF32 = 0x40,
+        kF64 = 0x80,
+        kSignedIntMask = kI16 | kI32 | kI64,
+        kUnsignedIntMask = kU16 | kU32 | kU64,
+        kIntMask = kSignedIntMask | kUnsignedIntMask,
+        kFloatMask = kF32 | kF64
       };
 
       Type type;
 
       union {
-        float     f32;
         double    f64;
         int64_t   i64;
         uint64_t  u64;
-        int32_t   i32;
-        uint32_t  u32;
-        int16_t   i16;
-        uint16_t  u16;
       } value;
     };
 

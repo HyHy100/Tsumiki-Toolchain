@@ -253,25 +253,25 @@ namespace kate::tlr {
 
     switch (v.type) {
       case ast::LitExpr::Value::Type::kI16:
-        out() << v.value.i16;
+        out() << v.value.i64;
         break;
       case ast::LitExpr::Value::Type::kU16:
-        out() << v.value.u16;
+        out() << v.value.u64;
         break;
       case ast::LitExpr::Value::Type::kI32:
-        out() << v.value.i32;
+        out() << v.value.i64;
         break;
       case ast::LitExpr::Value::Type::kI64:
         out() << v.value.i64;
         break;
       case ast::LitExpr::Value::Type::kF32:
-        out() << v.value.f32;
+        out() << v.value.f64;
         break;
       case ast::LitExpr::Value::Type::kF64:
         out() << v.value.f64;
         break;
       case ast::LitExpr::Value::Type::kU32:
-        out() << v.value.u32;
+        out() << v.value.u64;
         break;
       case ast::LitExpr::Value::Type::kU64:
         out() << v.value.u64;

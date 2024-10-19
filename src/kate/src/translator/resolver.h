@@ -3,6 +3,8 @@
 #include "ast.h"
 #include "sem.h"
 
+#include <optional>
+
 namespace kate::tlr {
   class Resolver {
   public:
@@ -12,6 +14,10 @@ namespace kate::tlr {
     
     void resolve(ast::Module* module);
   private:
+    std::optional<ast::LitExpr::Value> comptime_eval(ast::BinaryExpr* bexpr);
+
+    std::optional<ast::LitExpr::Value> comptime_eval(ast::Expr* expr);
+
     void resolve(ast::UniformDecl* uniform_);
 
     void resolve(ast::StructDecl* struct_);

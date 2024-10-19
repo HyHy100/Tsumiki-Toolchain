@@ -40,17 +40,17 @@ namespace kate::tlr {
     fn fragment_main(
       @input fragment_input: VertexOutput
     ): FragmentOutput {
-      var white_color = float4(1.0);
+      var white_c : [55 + 99]int;
 
       return FragmentOutput(
-        white_color,
+        fragment_input,
         fragment_input.normal,
         fragment_input.position
       );
     })");
 
-    /*Resolver resolver;
-    resolver.resolve(module.get());*/
+    Resolver resolver;
+    resolver.resolve(module.get());
 
     GLSLPrinter printer;
     printer.print(module.get());

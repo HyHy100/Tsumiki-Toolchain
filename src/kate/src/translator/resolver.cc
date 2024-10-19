@@ -119,21 +119,142 @@ namespace kate::tlr {
       resolve(if_stat->elseBlock().get());
   }
 
+  std::optional<ast::LitExpr::Value> Resolver::comptime_eval(ast::Expr* expr) 
+  {
+    if (auto bexpr = expr->as<ast::BinaryExpr>())
+      return comptime_eval(bexpr);
+    else if (auto litexpr = expr->as<ast::LitExpr>())
+        return litexpr->value();
+    else
+      return std::nullopt;
+  }
+
+  template<typename T>
+  std::optional<T> comptime_binary_expr_eval(ast::BinaryExpr::Type type, T lhs, T rhs) {
+    switch (type) {
+      case ast::BinaryExpr::Type::kAdd:
+        return lhs + rhs;
+      case ast::BinaryExpr::Type::kSubtract:
+        return lhs - rhs;
+      case ast::BinaryExpr::Type::kMul:
+        return lhs * rhs;
+      case ast::BinaryExpr::Type::kDiv:
+        return lhs / rhs;
+      case ast::BinaryExpr::Type::kBitXor:
+        return lhs ^ rhs;
+      case ast::BinaryExpr::Type::kBitOr:
+        return lhs | rhs;
+      case ast::BinaryExpr::Type::kBitAnd:
+        return lhs & rhs;
+      default:
+        return std::nullopt;
+    }
+  }
+
+  std::optional<ast::LitExpr::Value> Resolver::comptime_eval(ast::BinaryExpr* bexpr) 
+  {
+    auto lhs_val = comptime_eval(bexpr->lhs().get());
+    
+    if (!lhs_val) 
+      return std::nullopt;
+    
+    auto rhs_val = comptime_eval(bexpr->rhs().get());
+
+    if (!rhs_val) 
+      return std::nullopt;
+
+    ast::LitExpr::Value::Type type;
+
+    // if it's a 'float <expr> float' binary expression
+    if ((lhs_val->type & ast::LitExpr::Value::Type::kFloatMask) &&
+          (rhs_val->type & ast::LitExpr::Value::Type::kFloatMask)) 
+    {
+      // then we check if types are equal
+      if (lhs_val->type == rhs_val->type)
+        type = lhs_val->type;
+      else
+        // if types are not equal then we assume one of them is a 64 bit floating point value. 
+        type = ast::LitExpr::Value::kF64;
+
+      auto result = comptime_binary_expr_eval(bexpr->type(), lhs_val->value.f64, lhs_val->value.f64);
+
+      if (!result)
+        return std::nullopt;
+
+      return ast::LitExpr::Value {
+        .type = type,
+        .value.f64 = result.value()
+      };
+    }
+    // if it's a 'int <expr> int' binary expression
+    else if ((lhs_val->type & ast::LitExpr::Value::Type::kIntMask) &&
+          (rhs_val->type & ast::LitExpr::Value::Type::kIntMask)) 
+    {
+      // then we check if types are equal
+      if (lhs_val->type == rhs_val->type)
+        type = lhs_val->type;
+      else
+        // if types are not equal then we assume one of them is a 64 bit signed integer value. 
+        type = ast::LitExpr::Value::kI64;
+
+      auto result = comptime_binary_expr_eval(bexpr->type(), lhs_val->value.i64, lhs_val->value.i64);
+
+      if (!result)
+        return std::nullopt;
+
+      return ast::LitExpr::Value {
+        .type = type,
+        .value.i64 = result.value()
+      };
+    }
+    // if it's a 'uint <expr> uint' binary expression
+    else if ((lhs_val->type & ast::LitExpr::Value::Type::kUnsignedIntMask) &&
+          (rhs_val->type & ast::LitExpr::Value::Type::kUnsignedIntMask)) 
+    {
+      // then we check if types are equal
+      if (lhs_val->type == rhs_val->type)
+        type = lhs_val->type;
+      else
+        // if types are not equal then we assume one of them is a 64 unsigned integer value. 
+        type = ast::LitExpr::Value::kU64;
+
+      auto result = comptime_binary_expr_eval(bexpr->type(), lhs_val->value.u64, lhs_val->value.u64);
+
+      if (!result)
+        return std::nullopt;
+
+      return ast::LitExpr::Value {
+        .type = type,
+        .value.u64 = result.value()
+      };
+    } 
+
+    // compile time evaluation failed.
+    return std::nullopt;
+  }
+
   void Resolver::resolve(ast::ForStat* for_stat)
   {
-    resolve(for_stat->initializer().get());
+    if (auto& cond = for_stat->initializer())
+      resolve(for_stat->initializer().get());
 
-    resolve(for_stat->condition().get());
+    if (auto& cond = for_stat->condition())
+      resolve(for_stat->condition().get());
 
-    resolve(for_stat->continuing().get());
+    if (auto& cond = for_stat->continuing())
+      resolve(for_stat->continuing().get());
 
     resolve(for_stat->block().get());
   }
 
   void Resolver::resolve(ast::VarStat* var_stat)
   {
-    if (var_stat->expr()) {
-      resolve(var_stat->expr().get());
+    if (auto& ty = var_stat->decl()->type()) {
+      resolve(ty.get());
+    }
+
+    if (auto& expr = var_stat->expr()) {
+      resolve(expr.get());
 
       // if variable declaration statement is missing a type,
       // then we try to infer it from initializer.
@@ -194,15 +315,40 @@ namespace kate::tlr {
   types::Type* Resolver::resolve(ast::ArrayType* array_type)
   {
     auto subty = resolve(array_type->type().get());
+    
+    std::optional<ast::LitExpr::Value> array_size;
 
-    const auto name = subty->mangledName() + "[]";
+    // If it's an array, check if we have a size.
+    if (auto& array_size_expr = array_type->arraySizeExpr()) {
+      array_size = comptime_eval(array_size_expr.get());
 
-    if (auto ty = types::system().findType(name))
+      if (!array_size) {
+        // TODO: Handle error.
+        assert(false);
+        return nullptr;
+      }
+
+      if (array_size->value.u64 == 0) {
+        // TODO: Handle error.
+        assert(false);
+        return nullptr;
+      }
+    }
+
+    std::string type_name;
+
+    if (array_size)
+      type_name = fmt::format("{}[{}]", subty->mangledName(), array_size->value.u64);
+    else
+      // unsized array.
+      type_name = subty->mangledName() + "[]";
+
+    if (auto ty = types::system().findType(type_name))
       return ty;
 
     return types::system().addType(
-      name,
-      std::make_unique<types::Array>(subty, 100)
+      type_name,
+      std::make_unique<types::Array>(subty, array_size ?  array_size->value.u64 : 0)
     );
   }
 
