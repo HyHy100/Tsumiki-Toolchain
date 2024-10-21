@@ -50,6 +50,8 @@ namespace kate::tlr {
 
     void resolve(ast::Expr* expr);
 
+    void resolve(ast::ArrayExpr* array);
+
     void resolve(ast::LitExpr* lit);
 
     void resolve(ast::BinaryExpr* bexpr);

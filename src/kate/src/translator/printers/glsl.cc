@@ -292,8 +292,10 @@ namespace kate::tlr {
       [&](ast::ArrayType* expr) {
         print(expr);
       },
+      [&](ast::ArrayExpr* expr) {
+        print(expr);
+      },
       [&](base::Default) {
-        std::cout << "Failed at type: " << expr->typeName() << std::endl;
         assert(false);
       }
     );
@@ -498,6 +500,21 @@ namespace kate::tlr {
     }
 
     print(uexpr->operand().get());
+  }
+
+  void GLSLPrinter::print(ast::ArrayExpr* array_expr)
+  {
+    out () << "{ ";
+
+    auto& items = array_expr->items();
+
+    for (size_t i = 0; i < items.size(); i++) {
+      if (i > 0) out() << ", ";
+
+      print(items[i].get());
+    }
+
+    out() << " }";
   }
 
   void GLSLPrinter::print(ast::IdExpr* idexpr)

@@ -85,6 +85,24 @@ namespace kate::tlr::ast {
     );
   }
 
+  ArrayExpr::ArrayExpr(
+    std::vector<CRef<Expr>>&& items
+  ) : m_items { std::move(items) }
+  {
+  }
+
+  ast::CRef<ast::TreeNode> ArrayExpr::clone()
+  {
+    return context().make<ArrayExpr>(
+      context().clone(m_items)
+    );
+  }
+
+  std::vector<CRef<Expr>>& ArrayExpr::items()
+  {
+    return m_items;
+  }
+
   IdExpr::IdExpr(const std::string& ident) 
     : m_ident { ident }
   {
@@ -684,6 +702,7 @@ TS_RTTI_TYPE(ast::Attr)
 TS_RTTI_TYPE(ast::Decl)
 TS_RTTI_TYPE(ast::Expr)
 TS_RTTI_TYPE(ast::LitExpr)
+TS_RTTI_TYPE(ast::ArrayExpr)
 TS_RTTI_TYPE(ast::IdExpr)
 TS_RTTI_TYPE(ast::BinaryExpr)
 TS_RTTI_TYPE(ast::UnaryExpr)

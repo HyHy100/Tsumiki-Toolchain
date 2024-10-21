@@ -313,29 +313,52 @@ namespace kate::tlr {
     if (auto& ty = var_stat->decl()->type())
       resolve(ty.get());
 
-    if (auto& expr = var_stat->expr()) {
-      resolve(expr.get());
-
-      // if variable declaration statement is missing a type,
+    // if variable declaration statement is missing a type,
+    if (!var_stat->decl()->type()) {
       // then we try to infer it from initializer.
-      if (!var_stat->decl()->type()) {
-        auto ty = var_stat->expr()->sem()->type();
-      
-        auto sem = std::make_unique<sem::Expr>(var_stat->expr().get());
-        sem->setType(ty);
+      if (auto& expr = var_stat->expr()) {
+        resolve(expr.get());
 
-        var_stat->decl()->type()->setSem(std::move(sem));
+        auto ty = expr->sem()->type();
+        
+        auto sem_decl = std::make_unique<sem::Decl>(
+          var_stat->decl().get(),
+          ty
+        );
+
+        var_stat->decl()->setSem(std::move(sem_decl));
+
+        auto sem_expr = std::make_unique<sem::Expr>(
+          expr.get()
+        );
+
+        sem_expr->setType(ty);
+
+        var_stat->expr()->setSem(std::move(sem_expr));
+      } else // If there's no initializer then type is invalid.
+        error("Variables without a type must have an initializer.");
+    } else {
+      resolve(var_stat->decl()->type().get());
+
+      auto* ty = var_stat->decl()->type()->sem()->type();
+
+      auto sem = std::make_unique<sem::Decl>(
+        var_stat->decl().get(), 
+        ty
+      );
+
+      var_stat->decl()->setSem(std::move(sem));
+
+      if (auto& expr = var_stat->expr()) {
+        auto sem_expr = std::make_unique<sem::Expr>(
+          expr.get()
+        );
+
+        sem_expr->setType(ty);
+
+        var_stat->expr()->setSem(std::move(sem_expr));
       }
     }
-
-    resolve(var_stat->decl()->type().get());
-
-    auto sem = std::make_unique<sem::Decl>(
-      var_stat->decl().get(), 
-      var_stat->decl()->type()->sem()->type()
-    );
-
-    var_stat->decl()->setSem(std::move(sem));
 
     m_currentScope->addDecl(var_stat->decl()->sem());
   }
@@ -469,10 +492,53 @@ namespace kate::tlr {
       [&](ast::LitExpr* expr) {
         resolve(expr);
       },
+      [&](ast::ArrayExpr* expr) {
+        resolve(expr);
+      },
       [&](base::Default) {
         error("Unimplemented binary expression.");
       }
     );
+  }
+
+  void Resolver::resolve(ast::ArrayExpr* expr)
+  {
+    types::Type* previous_type = nullptr;
+
+    for (auto& item : expr->items()) {
+      resolve(item.get());
+
+      if (previous_type) {
+        if (item->sem()->type() != previous_type) {
+          error(
+            fmt::format(
+              "Type mismatch in array literal, expected a '{}', but got a '{}'.",
+              previous_type->mangledName(),
+              item->sem()->type()->mangledName()
+            )
+          );
+        }
+      }
+
+      previous_type = item->sem()->type();
+    }
+
+    auto type_name = fmt::format(
+      "{}[{}]", 
+      previous_type->mangledName(), 
+      expr->items().size()
+    );
+
+    auto type = types::system().findType(type_name);
+
+    if (!type) 
+      type = types::system().addType(
+        type_name,
+        std::make_unique<types::Array>(previous_type, expr->items().size())
+      );
+
+    expr->setSem(std::make_unique<sem::Expr>(expr));
+    expr->sem()->setType(type);
   }
 
   void Resolver::resolve(ast::LitExpr* lit)

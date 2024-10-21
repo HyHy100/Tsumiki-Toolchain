@@ -141,6 +141,8 @@ namespace kate::tlr {
 
         Result<ast::CRef<ast::LitExpr>> literal_expr();
 
+        Result<ast::CRef<ast::ArrayExpr>> array_expr();
+
         Result<std::string> parse_name();
         
         Failure error(const std::string& message);

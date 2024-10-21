@@ -269,6 +269,19 @@ namespace kate::tlr::ast {
     std::unique_ptr<sem::Expr> m_sem;
   };
 
+  class ArrayExpr : public base::rtti::Castable<ArrayExpr, Expr> {
+  public:
+    ArrayExpr(
+      std::vector<CRef<Expr>>&& items
+    );
+
+    ast::CRef<ast::TreeNode> clone() override;
+
+    std::vector<CRef<Expr>>& items();
+  private:
+    std::vector<CRef<Expr>> m_items;
+  };
+
   class IdExpr : public base::rtti::Castable<IdExpr, Expr> {
   public:
     IdExpr(const std::string& ident);

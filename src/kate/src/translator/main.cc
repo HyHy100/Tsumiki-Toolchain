@@ -44,7 +44,7 @@ namespace kate::tlr {
     fn fragment_main(
       @input fragment_input: VertexOutput
     ): FragmentOutput {
-      var white_c : [55 + 99]int;
+      var white_c = [ 66, 78, 98, 95 ];
       white_c[66] += 55;
 
       return FragmentOutput(

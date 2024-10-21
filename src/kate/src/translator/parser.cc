@@ -515,6 +515,36 @@ namespace kate::tlr {
     return expr_list;
   }
 
+  Result<ast::CRef<ast::ArrayExpr>> Parser::array_expr()
+  {
+    if (matches(Token::Type::kLBracket)) {
+      std::vector<ast::CRef<ast::Expr>> expr_list;
+
+      for (size_t i = 0; should_continue() && !matches(Token::Type::kRBracket); i++) {
+        if (i > 0)
+          if (!matches(Token::Type::kComma))
+            return error("Expected a ',' between expression when parsing array literal.");
+
+        auto expr = parse_expr();
+
+        if (expr.errored) return Failure::kError;
+
+        if (!expr.matched) return error("Expected expression in array literal.");
+
+        expr_list.push_back(std::move(expr.value));
+      }
+
+      if (expr_list.size() == 0)
+        return error("Empty array literals is not allowed.");
+
+      return ast::context().make<ast::ArrayExpr>(
+        std::move(expr_list)
+      );
+    }
+
+    return Failure::kNoMatch;
+  }
+
   Result<ast::CRef<ast::LitExpr>> Parser::literal_expr()
   {
     ast::LitExpr::Value value;
@@ -629,6 +659,12 @@ namespace kate::tlr {
 
     expr = identifier_expr(); 
     
+    if (expr.matched) return expr;
+
+    if (expr.errored) return Failure::kError;
+
+    expr = array_expr();
+
     if (expr.matched) return expr;
 
     if (expr.errored) return Failure::kError;

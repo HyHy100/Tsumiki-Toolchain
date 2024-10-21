@@ -52,6 +52,8 @@ namespace kate::tlr {
 
     void print(ast::IdExpr* idexpr);
 
+    void print(ast::ArrayExpr* array_expr);
+
     void print(ast::CallExpr* callexpr);
 
     void print(ast::ArrayType* array_type);
