@@ -14,9 +14,13 @@ namespace kate::tlr {
     
     void resolve(ast::Module* module);
   private:
-    std::optional<ast::LitExpr::Value> comptime_eval(ast::BinaryExpr* bexpr);
+    std::optional<ast::LitExpr::Value> comptime_eval(
+      ast::BinaryExpr* bexpr
+    );
 
-    std::optional<ast::LitExpr::Value> comptime_eval(ast::Expr* expr);
+    std::optional<ast::LitExpr::Value> comptime_eval(
+      ast::Expr* expr
+    );
 
     void resolve(ast::UniformDecl* uniform_);
 
@@ -34,11 +38,7 @@ namespace kate::tlr {
 
     void resolve(ast::VarStat* var_stat);
 
-    void resolve(ast::VarDecl* var_decl);
-
     void resolve(ast::ExprStat* expr_stat);
-
-    void resolve(ast::BreakStat* break_stat);
 
     void resolve(ast::WhileStat* while_stat);
 

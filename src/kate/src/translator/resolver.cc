@@ -305,11 +305,6 @@ namespace kate::tlr {
     resolve(for_stat->block().get());
   }
 
-  void Resolver::resolve(ast::VarDecl* var_decl)
-  {
-    
-  }
-
   void Resolver::resolve(ast::VarStat* var_stat)
   {
     if (auto& ty = var_stat->decl()->type())
@@ -345,10 +340,6 @@ namespace kate::tlr {
   void Resolver::resolve(ast::ExprStat* expr_stat)
   {
     resolve(expr_stat->expr().get());
-  }
-
-  void Resolver::resolve(ast::BreakStat* break_stat)
-  {
   }
 
   void Resolver::resolve(ast::WhileStat* while_stat)
