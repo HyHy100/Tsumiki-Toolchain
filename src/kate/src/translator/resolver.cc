@@ -394,6 +394,7 @@ namespace kate::tlr {
   void Resolver::error(const std::string& err)
   {
     fmt::println("{}", err);
+    std::exit(1);
   }
 
   types::Type* Resolver::resolve(ast::Type* type)
@@ -676,10 +677,52 @@ namespace kate::tlr {
           return;
         }
 
+        // if array is of fixed size,
+        if (auto array_size_count = array_type->count()) {
+          // then try to resolve index at compile time.
+          if (auto comptime_index = comptime_eval(bexpr->rhs().get())) {
+            // and test if index is out of bounds.
+            if (comptime_index.value().value.u64 >= array_size_count) {
+              error(
+                fmt::format(
+                  "Array index access '{}' is out of bounds for array with fixed size of '{}'.",
+                  comptime_index.value().value.u64,
+                  array_size_count
+                )
+              );
+              return;
+            }
+          }          
+        }
+
         bexpr->setSem(std::make_unique<sem::Expr>(bexpr));
         bexpr->sem()->setType(array_type->type());
       } else if (auto* matrix_type = bexpr->lhs()->sem()->type()->as<types::Mat>()) {
         resolve(bexpr->rhs().get());
+
+        // (Renan): this check here must be removed in the long term,
+        // because ideally we need to check if the given type is convertible
+        // to uint instead.
+        if (bexpr->rhs()->sem()->type()->mangledName() != "uint" &&
+            bexpr->rhs()->sem()->type()->mangledName() != "int") {
+          error("Array size expression type must be an integer.");
+          return;
+        }
+
+        // try to resolve index at compile time.
+        if (auto comptime_index = comptime_eval(bexpr->rhs().get())) {
+          // and test if index is out of bounds.
+          if (comptime_index.value().value.u64 >= matrix_type->columns()) {
+            error(
+              fmt::format(
+                "Matrix index access '{}' is out of bounds for matrix of type '{}'.",
+                comptime_index.value().value.u64,
+                matrix_type->mangledName()
+              )
+            );
+            return;
+          }
+        }
 
         auto vec_type = types::system().findType(
           fmt::format(
@@ -687,7 +730,7 @@ namespace kate::tlr {
             matrix_type->type()->mangledName(), 
             matrix_type->rows()
           )
-        );
+        );  
       
         bexpr->setSem(std::make_unique<sem::Expr>(bexpr));
         bexpr->sem()->setType(vec_type);
@@ -745,9 +788,7 @@ namespace kate::tlr {
 
     if (auto* constructor_type = types::system().findType(name)) {
       if (auto* array_type = constructor_type->as<types::Array>()) {
-        // TODO: Handle error.
-        // Array constructors are not supported yet.
-        assert(false);
+        error("Array constructors are not supported, use the '[ ... ]' syntax instead.");
         return;
       } else if (auto* user_type = constructor_type->as<types::Custom>()) {
         auto& members = user_type->members();

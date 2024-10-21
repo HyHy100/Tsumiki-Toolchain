@@ -57,7 +57,7 @@ namespace kate::tlr {
       return FragmentOutput(
         generate_float4(),
         fragment_input.normal.xxx,
-        mymat[0]
+        mymat[3]
       );
     })");
 
