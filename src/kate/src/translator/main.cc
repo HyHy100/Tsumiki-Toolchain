@@ -33,7 +33,11 @@ namespace kate::tlr {
     struct FragmentOutput {
       @location(0) color : float4,
       @location(1) normal : float3,
-      @location(2) position : float3
+      @location(2) position : float4
+    }
+
+    fn generate_float4() : float4 {
+      return float4(1.0, 1.0, 1.0, 1.0);
     }
 
     @fragment
@@ -41,9 +45,10 @@ namespace kate::tlr {
       @input fragment_input: VertexOutput
     ): FragmentOutput {
       var white_c : [55 + 99]int;
+      white_c[66] += 55;
 
       return FragmentOutput(
-        fragment_input,
+        generate_float4(),
         fragment_input.normal,
         fragment_input.position
       );

@@ -61,20 +61,20 @@ namespace kate::gpu {
 
     auto vk_image_create_info = vk::ImageCreateInfo(
       {},
-      vktype,             // type
-      vk_format,            // format
-      vk::Extent3D {          // extent
+      vktype,                       // type
+      vk_format,                    // format
+      vk::Extent3D {                // extent
         extent.width(),
         extent.height(),
         extent.depth()
       },
-      0,                // mip level
-      layers,             // array layers
+      0,                            // mip level
+      layers,                       // array layers
       vk::SampleCountFlagBits::e1,  // sample count
       vk::ImageTiling::eOptimal,    // image tiling
-      vk_usage,             // usage
+      vk_usage,                     // usage
       vk::SharingMode::eExclusive,  // sharing mode
-      {}                // TODO (renan): Fix this once we have a basic build.
+      {}                            // TODO (renan): Fix this once we have a basic build.
     );
 
     m_image = vk_device.createImage(vk_image_create_info);

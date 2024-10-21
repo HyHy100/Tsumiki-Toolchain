@@ -8,7 +8,7 @@
 namespace kate::tlr {
   class Resolver {
   public:
-    Resolver() = default;
+    Resolver();
 
     ~Resolver() = default;
     
@@ -33,6 +33,8 @@ namespace kate::tlr {
     void resolve(ast::ForStat* for_stat);
 
     void resolve(ast::VarStat* var_stat);
+
+    void resolve(ast::VarDecl* var_decl);
 
     void resolve(ast::ExprStat* expr_stat);
 
@@ -65,5 +67,7 @@ namespace kate::tlr {
     types::Type* resolve(ast::TypeId* type_id);
 
     sem::Scope* m_currentScope;
+
+    ast::FuncDecl* m_current_function;
   };
 }

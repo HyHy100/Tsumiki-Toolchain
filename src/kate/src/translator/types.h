@@ -15,6 +15,23 @@ namespace kate::tlr::types {
     virtual std::string mangledName() const = 0;
 
     virtual uint64_t numSlots() const { return 0; }
+
+    virtual Type* type() { return nullptr; }
+  };
+
+  class Ref : public base::rtti::Castable<Ref, Type> {
+  public:
+    Ref() = delete;
+
+    Ref(Type* toType);
+
+    uint64_t numSlots() const override;
+
+    Type* type() override;
+
+    std::string mangledName() const override;
+  private:
+    Type* m_type;
   };
 
   class Mat : public base::rtti::Castable<Mat, Type> {
@@ -27,7 +44,7 @@ namespace kate::tlr::types {
 
     size_t columns() const;
 
-    Type* type();
+    Type* type() override;
 
     std::string mangledName() const override;
 
@@ -46,7 +63,7 @@ namespace kate::tlr::types {
 
     size_t count() const;
 
-    Type* type();
+    Type* type() override;
 
     std::string mangledName() const override;
   private:
@@ -75,7 +92,7 @@ namespace kate::tlr::types {
 
     size_t columns() const;
 
-    Type* type();
+    Type* type() override;
 
     std::string mangledName() const override;
 
@@ -94,6 +111,8 @@ namespace kate::tlr::types {
       Member(Type* type, const std::string& name);
 
       Type* type();
+
+      const std::string& name() const;
     private:
       Type* m_type;
       std::string m_name;

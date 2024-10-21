@@ -9,11 +9,16 @@
 namespace kate::tlr::sem {
   class Decl {
   public:
-    Decl(ast::Decl* decl);
+    Decl(ast::Decl* decl, types::Type* type);
 
     std::string_view name();
+
+    types::Type* type();
+
+    ast::Decl* decl();
   private:
     ast::Decl* m_decl;
+    types::Type* m_type;
   };
 
   class Expr {

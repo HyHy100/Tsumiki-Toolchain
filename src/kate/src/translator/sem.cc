@@ -1,14 +1,25 @@
 #include "sem.h"
 
 namespace kate::tlr::sem {
-  Decl::Decl(ast::Decl* decl)
-   : m_decl { decl }
+  Decl::Decl(ast::Decl* decl, types::Type* type)
+   : m_decl { decl },
+      m_type { type }
   {
+  }
+
+  types::Type* Decl::type()
+  {
+    return m_type;
   }
 
   std::string_view Decl::name()
   {
     return m_decl->name();
+  }
+
+  ast::Decl* Decl::decl()
+  {
+    return m_decl;
   }
 
   Expr::Expr(ast::Expr* expr)

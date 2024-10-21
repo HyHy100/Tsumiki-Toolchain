@@ -59,6 +59,26 @@ namespace kate::tlr::types {
     return fmt::format("{}[{}]", m_type->mangledName(), count()); 
   }
 
+  Ref::Ref(Type* toType)
+    : m_type { toType }
+  {
+  }
+
+  std::string Ref::mangledName() const
+  {
+    return m_type->mangledName() + "&";
+  }
+
+  uint64_t Ref::numSlots() const
+  {
+    return m_type->numSlots();
+  }
+
+  Type* Ref::type()
+  {
+    return m_type->type();
+  }
+
   Custom::Member::Member(Type* type, const std::string& name)
     : m_type { type },
       m_name { name }
@@ -81,6 +101,11 @@ namespace kate::tlr::types {
   ) : m_name{ name },
       m_members { std::move(members) }
   {
+  }
+
+  const std::string& Custom::Member::name() const
+  {
+    return m_name;
   }
 
   const std::string& Custom::name() const
@@ -238,3 +263,4 @@ TS_RTTI_TYPE(kate::tlr::types::Array)
 TS_RTTI_TYPE(kate::tlr::types::Vec)
 TS_RTTI_TYPE(kate::tlr::types::Custom)
 TS_RTTI_TYPE(kate::tlr::types::Scalar)
+TS_RTTI_TYPE(kate::tlr::types::Ref)

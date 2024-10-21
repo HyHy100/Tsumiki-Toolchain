@@ -1,6 +1,12 @@
 #include "resolver.h"
 
 namespace kate::tlr {
+  Resolver::Resolver()
+    : m_current_function { nullptr },
+      m_currentScope { nullptr }
+  {
+  }
+
   void Resolver::resolve(ast::Module* module)
   {
     module->setSem(std::make_unique<sem::Module>());
@@ -38,28 +44,75 @@ namespace kate::tlr {
 
   void Resolver::resolve(ast::StructDecl* struct_)
   {
+    std::vector<types::Custom::Member> members;
+
     for (auto& m : struct_->members()) {
       for (auto& m2 : struct_->members())
         if (&m2 != &m && m2->name() == m->name()) {
-          assert(false); // duplicate member name.
+          assert(false); // TODO: duplicate member name.
+          return;
         }
 
       resolve(m->type().get());
+
+      m->setSem(
+        std::make_unique<sem::Decl>(
+          m.get(),
+          m->type()->sem()->type()
+        )
+      );
+
+      members.push_back(
+        types::Custom::Member(
+          m->type()->sem()->type(),
+          m->name()
+        )
+      );
     }
+
+    struct_->setSem(
+      std::make_unique<sem::Decl>(
+        struct_,
+        types::system().addType(
+          struct_->name(),
+          std::make_unique<types::Custom>(
+            struct_->name(),
+            std::move(members)
+          )
+        )
+      )
+    );
   }
 
   void Resolver::resolve(ast::FuncDecl* func)
-  {
-    for (auto& arg : func->args()) {
-      resolve(arg.get());
-    }
+  {    
+    m_current_function = func;
+
+    resolve(func->type().get());
+
+    for (auto& arg : func->args()) resolve(arg.get());
 
     resolve(func->block().get());
+
+    func->setSem(std::make_unique<sem::Decl>(func, func->type()->sem()->type()));
+
+    m_currentScope->addDecl(func->sem());
+
+    m_current_function = nullptr;
   }
 
   void Resolver::resolve(ast::FuncArg* func_arg)
   {
     resolve(func_arg->type().get());
+
+    func_arg->setSem(
+      std::make_unique<sem::Decl>(
+        func_arg, 
+        func_arg->type()->sem()->type()
+      )
+    );
+
+    m_currentScope->addDecl(func_arg->sem());
   }
 
   void Resolver::resolve(ast::BlockStat* block)
@@ -252,11 +305,15 @@ namespace kate::tlr {
     resolve(for_stat->block().get());
   }
 
+  void Resolver::resolve(ast::VarDecl* var_decl)
+  {
+    
+  }
+
   void Resolver::resolve(ast::VarStat* var_stat)
   {
-    if (auto& ty = var_stat->decl()->type()) {
+    if (auto& ty = var_stat->decl()->type())
       resolve(ty.get());
-    }
 
     if (auto& expr = var_stat->expr()) {
       resolve(expr.get());
@@ -265,13 +322,24 @@ namespace kate::tlr {
       // then we try to infer it from initializer.
       if (!var_stat->decl()->type()) {
         auto ty = var_stat->expr()->sem()->type();
-        
+      
         auto sem = std::make_unique<sem::Expr>(var_stat->expr().get());
         sem->setType(ty);
 
         var_stat->decl()->type()->setSem(std::move(sem));
       }
     }
+
+    resolve(var_stat->decl()->type().get());
+
+    auto sem = std::make_unique<sem::Decl>(
+      var_stat->decl().get(), 
+      var_stat->decl()->type()->sem()->type()
+    );
+
+    var_stat->decl()->setSem(std::move(sem));
+
+    m_currentScope->addDecl(var_stat->decl()->sem());
   }
 
   void Resolver::resolve(ast::ExprStat* expr_stat)
@@ -293,6 +361,12 @@ namespace kate::tlr {
   void Resolver::resolve(ast::ReturnStat* return_stat)
   {
     resolve(return_stat->expr().get());
+
+    if (return_stat->expr()->sem()->type()->mangledName() != m_current_function->type()->sem()->type()->mangledName()) {
+      // TODO: Handle error.
+      assert(false);
+      return;
+    }
   }
 
   void Resolver::resolve(ast::BufferDecl* buffer_decl)
@@ -345,27 +419,36 @@ namespace kate::tlr {
     if (array_size)
       type_name = fmt::format("{}[{}]", subty->mangledName(), array_size->value.u64);
     else
-      // unsized array.
-      type_name = subty->mangledName() + "[]";
+      type_name = subty->mangledName() + "[]"; // unsized array.
 
     if (auto ty = types::system().findType(type_name))
       return ty;
 
-    return types::system().addType(
+    auto ty = types::system().addType(
       type_name,
       std::make_unique<types::Array>(subty, array_size ?  array_size->value.u64 : 0)
     );
+
+    array_type->setSem(std::make_unique<sem::Expr>(array_type));
+
+    array_type->sem()->setType(ty);
+
+    return ty;
   }
 
   types::Type* Resolver::resolve(ast::TypeId* type_id)
   {
-    if (auto ty = types::system().findType(type_id->id()))
-      return ty;
+    if (auto ty = types::system().findType(type_id->id())) {
+      type_id->setSem(std::make_unique<sem::Expr>(type_id));
 
-    return types::system().addType(
-      type_id->id(), 
-      std::make_unique<types::Scalar>(type_id->id())
-    );
+      type_id->sem()->setType(ty);
+
+      return ty;
+    }
+
+    // TODO: Handle error here.
+    assert(false);
+    return nullptr;
   }
 
   void Resolver::resolve(ast::Expr* expr)
@@ -430,21 +513,100 @@ namespace kate::tlr {
   void Resolver::resolve(ast::BinaryExpr* bexpr)
   {
     resolve(bexpr->lhs().get());
-    resolve(bexpr->rhs().get());
+
+    if (bexpr->type() == ast::BinaryExpr::Type::kMemberAccess) {   
+      if (auto* ident = bexpr->rhs()->as<ast::IdExpr>()) {
+        auto* lhs_type = bexpr->lhs()->sem()->type();
+
+        if (auto* user_type = lhs_type->as<types::Custom>()) {
+          for (auto& member : user_type->members()) {
+            if (member.name() == ident->ident()) {
+              bexpr->setSem(std::make_unique<sem::Expr>(bexpr));
+              bexpr->sem()->setType(member.type());
+
+              break;
+            }
+          }
+
+          if (!bexpr->sem()) {
+            // TODO: Handle error.
+            assert(false);
+            return;
+          }
+        } else {
+          // (Renan): Support for swizzles is currently ongoing work.
+          // TODO: Handle error.
+          assert(false);
+          return;
+        }
+      } else {
+        // (Renan): This code path should never be reachable,
+        // because the parser must require 'rhs' to be an identifier.
+        assert(false);
+      }
+    } else if (bexpr->type() == ast::BinaryExpr::Type::kIndexAccessor) {
+      if (auto* array_type = bexpr->lhs()->sem()->type()->as<types::Array>()) {
+        // first we need to resolve rhs
+        resolve(bexpr->rhs().get());
+
+        // (Renan): this check here must be removed in the long term,
+        // because ideally we need to check if the given type is convertible
+        // to uint instead.
+        if (bexpr->rhs()->sem()->type()->mangledName() != "uint" &&
+            bexpr->rhs()->sem()->type()->mangledName() != "int") {
+          // TODO: Handle error.
+          assert(false);
+          return;
+        }
+
+        bexpr->setSem(std::make_unique<sem::Expr>(bexpr));
+        bexpr->sem()->setType(array_type->type());
+      } else {
+        // TODO: Handle error.
+        assert(false);
+        return;
+      }
+    } else {
+      resolve(bexpr->rhs().get());
+
+      auto lhs_type = bexpr->lhs()->sem()->type();
+      auto rhs_type = bexpr->rhs()->sem()->type();
+
+      bexpr->setSem(std::make_unique<sem::Expr>(bexpr));
+
+      if (lhs_type == rhs_type) {
+        bexpr->sem()->setType(lhs_type);
+        return;
+      }
+
+      // TODO: implement implicit conversions (?)
+      assert(false);
+    }
   }
 
   void Resolver::resolve(ast::UnaryExpr* uexpr)
   {
     resolve(uexpr->operand().get());
+
+    uexpr->setSem(std::make_unique<sem::Expr>(uexpr));
+    
+    // propagate type of operand
+    uexpr->sem()->setType(uexpr->operand()->sem()->type());
   }
 
   sem::Decl* Resolver::resolve(ast::IdExpr* idexpr)
   {
-    return m_currentScope->findDecl(idexpr->ident());
+    auto decl = m_currentScope->findDecl(idexpr->ident());
+
+    idexpr->setSem(std::make_unique<sem::Expr>(idexpr));
+    idexpr->sem()->setType(decl->type());
+
+    return decl;
   }
 
   void Resolver::resolve(ast::CallExpr* callexpr)
   {
+    // TODO: Implement type conversion validation.
     auto name = callexpr->id()->ident();
 
     auto& call_args = callexpr->args();
@@ -489,8 +651,19 @@ namespace kate::tlr {
             assert(false);
             return;
           }
+        } 
+        // otherwise we have a mat/vec
+        else if (call_args.size() == 1) {
+          // it's fine if there's a single argument being passed,
+          auto* arg_type = call_args[0]->sem()->type();
+
+          // we just need to validate if it's a scalar.
+          if (!arg_type->is<types::Scalar>()) {
+            // TODO: Handle error.
+            assert(false);
+            return;
+          }
         } else {
-          // otherwise we have a mat/vec
           uint64_t num_scalars_in_arguments = 0;
 
           for (auto& arg : call_args) {
@@ -513,7 +686,47 @@ namespace kate::tlr {
           }
         }
       }
-    }    
+
+      // If we are here then all previous validations succedded.
+      callexpr->setSem(std::make_unique<sem::Expr>(callexpr));
+      callexpr->sem()->setType(constructor_type);
+    } else {
+      // Otherwise we have a function here.
+      auto* semDecl = m_currentScope->findDecl(name);
+
+      if (!semDecl) {
+        // TODO: Handle error.
+        assert(false);
+        return;
+      }
+
+      // Validate if we have a function declaration.
+      if (auto* func_decl = semDecl->decl()->as<ast::FuncDecl>()) {
+        if (call_args.size() != func_decl->args().size()) {
+          // TODO: Handle error.
+          assert(false);
+          return;
+        }
+
+        for (size_t i = 0; i < call_args.size(); i++) {
+          auto& arg = call_args[i];
+
+          if (arg->sem()->type()->mangledName() != func_decl->args()[i]->type()->sem()->type()->mangledName()) {
+            // TODO: Handle error.
+            assert(false);
+            return;
+          }
+        }
+
+        // If we are here then all previous checks succeded.
+        callexpr->setSem(std::make_unique<sem::Expr>(callexpr));
+        callexpr->sem()->setType(func_decl->type()->sem()->type());
+      } else {
+        // TODO: Handle error.
+        assert(false);
+        return;
+      }
+    }
   }
 
   void Resolver::resolve(ast::StructMember* struct_member)
