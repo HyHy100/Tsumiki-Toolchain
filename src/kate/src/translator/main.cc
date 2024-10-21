@@ -37,7 +37,7 @@ namespace kate::tlr {
     }
 
     fn generate_float4() : float4 {
-      return float4(1.0, 1.0, 1.0, 1.0);
+      return float4(1.0);
     }
 
     @fragment

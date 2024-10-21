@@ -1,6 +1,7 @@
 #include "glsl.h"
 #include "base/rtti.h"
 
+
 #include <cassert>
 
 namespace kate::tlr {
@@ -112,14 +113,65 @@ namespace kate::tlr {
     print(for_stat->block().get());
   }
 
+  void GLSLPrinter::print_type_prefix(types::Type* type)
+  {
+    if (auto array_type = type->as<types::Array>())
+      print_type_prefix(array_type->type());
+    else
+      out() << maybe_translate_ksl_type_to_glsl(type->mangledName());
+  }
+
+  std::string GLSLPrinter::maybe_translate_ksl_type_to_glsl(
+    const std::string& type
+  )
+  {
+    if (type == "float2") return "vec2";
+    if (type == "float3") return "vec3";
+    if (type == "float4") return "vec4";
+
+    if (type == "float4x2") return "mat4x2";
+    if (type == "float4x3") return "mat4x3";
+    if (type == "float4x4") return "mat4x4";
+
+    if (type == "float3x2") return "mat3x2";
+    if (type == "float3x3") return "mat3x3";
+    if (type == "float3x4") return "mat3x4";
+
+    if (type == "float2x2") return "mat2x2";
+    if (type == "float2x3") return "mat2x3";
+    if (type == "float2x4") return "mat2x4";
+
+    if (type == "int2") return "ivec2";
+    if (type == "int3") return "ivec3";
+    if (type == "int4") return "ivec4";
+
+    if (type == "double2") return "dvec2";
+    if (type == "double3") return "dvec3";
+    if (type == "double4") return "dvec4";
+    
+    if (type == "uint2") return "uvec2";
+    if (type == "uint3") return "uvec3";
+    if (type == "uint4") return "uvec4";
+
+    return type; // user type
+  }
+
+  void GLSLPrinter::print_type_postfix(types::Type* type)
+  {
+    if (auto array_type = type->as<types::Array>()) {
+      out() << "[" << array_type->count() << "]";
+
+      print_type_postfix(array_type->type());
+    }
+  }
+
   void GLSLPrinter::print(ast::VarStat* var_stat)
   {
-    auto& var_type = var_stat->decl()->type();
-
-    if (var_type) 
-      print(var_type.get());
+    print_type_prefix(var_stat->decl()->sem()->type());
 
     out() << " " << var_stat->decl()->name();
+
+    print_type_postfix(var_stat->decl()->sem()->type());
 
     if (var_stat->expr()) {
       out() << " = ";
@@ -455,7 +507,7 @@ namespace kate::tlr {
 
   void GLSLPrinter::print(ast::CallExpr* callexpr)
   {
-    out() << callexpr->id()->ident() << "(";
+    out() << maybe_translate_ksl_type_to_glsl(callexpr->id()->ident()) << "(";
 
     auto& args = callexpr->args();
     
@@ -481,6 +533,6 @@ namespace kate::tlr {
 
   void GLSLPrinter::print(ast::TypeId* type_id)
   {
-    out() << type_id->id();
+    out() << maybe_translate_ksl_type_to_glsl(type_id->id());
   }
 }

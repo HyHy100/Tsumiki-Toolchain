@@ -1,6 +1,8 @@
 #pragma once
 
 #include "../ast.h"
+#include "../sem.h"
+#include "../types.h"
 
 #include <iostream>
 #include <sstream>
@@ -55,6 +57,14 @@ namespace kate::tlr {
     void print(ast::ArrayType* array_type);
 
     void print(ast::TypeId* type_id);
+
+    void print_type_prefix(types::Type* type);
+
+    void print_type_postfix(types::Type* type);
+
+    std::string maybe_translate_ksl_type_to_glsl(
+      const std::string& type
+    );
 
     std::stringstream& out();
 

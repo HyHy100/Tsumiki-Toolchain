@@ -49,7 +49,13 @@ namespace kate::tlr {
     for (auto& m : struct_->members()) {
       for (auto& m2 : struct_->members())
         if (&m2 != &m && m2->name() == m->name()) {
-          assert(false); // TODO: duplicate member name.
+          error(
+            fmt::format(
+              "Member named '{}' has already appeared in struct '{}'. Members with the same name are not allowed here.",
+              m->name(),
+              struct_->name()
+            )
+          );
           return;
         }
 
@@ -143,9 +149,6 @@ namespace kate::tlr {
         },
         [&](ast::ExprStat* expr_stat) {
           resolve(expr_stat);
-        },
-        [&](ast::BreakStat* break_stat) {
-          resolve(break_stat);
         },
         [&](ast::WhileStat* while_stat) {
           resolve(while_stat);
@@ -355,7 +358,7 @@ namespace kate::tlr {
 
     if (return_stat->expr()->sem()->type()->mangledName() != m_current_function->type()->sem()->type()->mangledName()) {
       // TODO: Handle error.
-      assert(false);
+      error("Type mismatch between expression and function return type.");
       return;
     }
   }
@@ -363,6 +366,11 @@ namespace kate::tlr {
   void Resolver::resolve(ast::BufferDecl* buffer_decl)
   {
     resolve(buffer_decl->type().get());
+  }
+
+  void Resolver::error(const std::string& err)
+  {
+    fmt::println("{}", err);
   }
 
   types::Type* Resolver::resolve(ast::Type* type)
@@ -376,7 +384,7 @@ namespace kate::tlr {
         return resolve(type);
       },
       [&](base::Default) -> types::Type* {
-        assert(false);
+        error("Type is not implemented.");
         return nullptr;
       }
     );
@@ -394,13 +402,13 @@ namespace kate::tlr {
 
       if (!array_size) {
         // TODO: Handle error.
-        assert(false);
+        error("Can't resolve array size at compile time.");
         return nullptr;
       }
 
       if (array_size->value.u64 == 0) {
         // TODO: Handle error.
-        assert(false);
+        error("Array size of size '0' is not allowed.");
         return nullptr;
       }
     }
@@ -438,7 +446,7 @@ namespace kate::tlr {
     }
 
     // TODO: Handle error here.
-    assert(false);
+    error(fmt::format("Unable to find '{}'.", type_id->id()));
     return nullptr;
   }
 
@@ -461,8 +469,8 @@ namespace kate::tlr {
       [&](ast::LitExpr* expr) {
         resolve(expr);
       },
-      [](base::Default) {
-        assert(false);
+      [&](base::Default) {
+        error("Unimplemented binary expression.");
       }
     );
   }
@@ -497,7 +505,7 @@ namespace kate::tlr {
         lit->sem()->setType(types::system().findType("ulong"));
         break;
       default:
-        assert(false);
+        error("Unimplemented literal type.");
     }
   }
 
@@ -520,8 +528,7 @@ namespace kate::tlr {
           }
 
           if (!bexpr->sem()) {
-            // TODO: Handle error.
-            assert(false);
+            error(fmt::format("Unable to find member '{}' in '{}'.", ident->ident(), user_type->name()));
             return;
           }
         } else {
@@ -545,16 +552,14 @@ namespace kate::tlr {
         // to uint instead.
         if (bexpr->rhs()->sem()->type()->mangledName() != "uint" &&
             bexpr->rhs()->sem()->type()->mangledName() != "int") {
-          // TODO: Handle error.
-          assert(false);
+          error("Array size expression type must be an integer.");
           return;
         }
 
         bexpr->setSem(std::make_unique<sem::Expr>(bexpr));
         bexpr->sem()->setType(array_type->type());
       } else {
-        // TODO: Handle error.
-        assert(false);
+        error("Index accessors are only allowed for arrays.");
         return;
       }
     } else {
@@ -608,23 +613,33 @@ namespace kate::tlr {
     if (auto* constructor_type = types::system().findType(name)) {
       if (auto* array_type = constructor_type->as<types::Array>()) {
         // TODO: Handle error.
-        // Array constructores are not supported yet.
+        // Array constructors are not supported yet.
         assert(false);
         return;
       } else if (auto* user_type = constructor_type->as<types::Custom>()) {
         auto& members = user_type->members();
         
         if (members.size() != call_args.size()) {
-          // TODO: Handle error.
-          assert(false);
+          error(
+            fmt::format(
+              "Can't construct object from struct, {} arguments were provided but {} were expected.", 
+              call_args.size(), 
+              members.size()
+            )
+          );
           return;
         }
 
         for (size_t i = 0; i < members.size(); i++) {
           // check if types are compatible
           if (members[i].type()->mangledName() != call_args[i]->sem()->type()->mangledName()) {
-            // TODO: Handle error.
-            assert(false);
+            error(
+              fmt::format(
+                "Type '{}' is not compatible with expected type '{}'.",
+                call_args[i]->sem()->type()->mangledName(),
+                members[i].type()->mangledName()
+              )
+            );
             return;
           }  
         }
@@ -632,48 +647,62 @@ namespace kate::tlr {
         // If it's a scalar.
         if (constructor_type->numSlots() == 1) {
           if (call_args.size() > 1) {
-            // TODO: Handle error.
-            assert(false);
+            error("Scalar constructors should have just one argument.");
             return;
           }
 
           // then check if the only arguments is of the same type of the constructor identifier.
           if (call_args[0]->sem()->type() != constructor_type) {
-            assert(false);
+            error(
+              fmt::format(
+                "Expected '{}' in scalar constructor, but got '{}'.", 
+                constructor_type->mangledName(), 
+                call_args[0]->sem()->type()->mangledName()
+              )
+            );
             return;
           }
         } 
         // otherwise we have a mat/vec
-        else if (call_args.size() == 1) {
-          // it's fine if there's a single argument being passed,
-          auto* arg_type = call_args[0]->sem()->type();
+        else {
+          // mat/vec types constructors are allowed to have just one scalar as argument.
+          if (call_args.size() == 1) {
+            // it's fine if there's a single argument being passed,
+            auto* arg_type = call_args[0]->sem()->type();
 
-          // we just need to validate if it's a scalar.
-          if (!arg_type->is<types::Scalar>()) {
-            // TODO: Handle error.
-            assert(false);
-            return;
-          }
-        } else {
-          uint64_t num_scalars_in_arguments = 0;
-
-          for (auto& arg : call_args) {
-            auto* arg_type = arg->sem()->type();
-
-            // Only matrix / scalar / vector types are allowed here.
-            if (!(arg_type->is<types::Mat>() || arg_type->is<types::Scalar>() || arg_type->is<types::Vec>())) {
-              // TODO: Handle error.
-              assert(false);
+            // we just need to validate if it's a scalar.
+            if (!arg_type->is<types::Scalar>()) {
+              error("Matrix and vector constructors with a single constructor argument is expected to receive a scalar type.");
               return;
             }
+          } 
+          // and also allowed to have matrix / scalar / vector types as arguments,
+          // as long as they are not greater than type's scalar count.
+          else {
+            uint64_t num_scalars_in_arguments = 0;
 
-            num_scalars_in_arguments += arg->sem()->type()->numSlots();
-          }
+            for (auto& arg : call_args) {
+              auto* arg_type = arg->sem()->type();
 
-          if (num_scalars_in_arguments != constructor_type->numSlots()) {
-            // TODO: Handle error.
-            assert(false);
-            return;
+              // Only matrix / scalar / vector types are allowed here.
+              if (!(arg_type->is<types::Mat>() || arg_type->is<types::Scalar>() || arg_type->is<types::Vec>())) {
+                error("Only matrices, scalars and vectors are allowed when constructing themselves.");
+                return;
+              }
+
+              num_scalars_in_arguments += arg->sem()->type()->numSlots();
+            }
+
+            if (num_scalars_in_arguments != constructor_type->numSlots()) {
+              error(
+                fmt::format(
+                  "Mismatch between number of scalars in arguments and number of scalars required for '{}'(expects {}).",
+                  constructor_type->mangledName(),
+                  constructor_type->numSlots()
+                )
+              );
+              return;
+            }
           }
         }
       }
@@ -686,16 +715,26 @@ namespace kate::tlr {
       auto* semDecl = m_currentScope->findDecl(name);
 
       if (!semDecl) {
-        // TODO: Handle error.
-        assert(false);
+        error(
+          fmt::format(
+            "Can't find a function named '{}' in this scope.",
+            name
+          )
+        );
         return;
       }
 
       // Validate if we have a function declaration.
       if (auto* func_decl = semDecl->decl()->as<ast::FuncDecl>()) {
         if (call_args.size() != func_decl->args().size()) {
-          // TODO: Handle error.
-          assert(false);
+          error(
+            fmt::format(
+              "Wrong number of arguments for function '{}', {} were passed but function expects '{}'.",
+              func_decl->name(),
+              call_args.size(),
+              func_decl->args().size()
+            )
+          );
           return;
         }
 
@@ -703,8 +742,16 @@ namespace kate::tlr {
           auto& arg = call_args[i];
 
           if (arg->sem()->type()->mangledName() != func_decl->args()[i]->type()->sem()->type()->mangledName()) {
-            // TODO: Handle error.
-            assert(false);
+            error(
+              fmt::format(
+                "Invalid argument <{}> for function '{}'. Function '{}' expected a '{}' here, but '{}' was passed.",
+                i,
+                name,
+                name,
+                func_decl->args()[i]->type()->sem()->type()->mangledName(),
+                arg->sem()->type()->mangledName()
+              )
+            );
             return;
           }
         }
@@ -713,8 +760,7 @@ namespace kate::tlr {
         callexpr->setSem(std::make_unique<sem::Expr>(callexpr));
         callexpr->sem()->setType(func_decl->type()->sem()->type());
       } else {
-        // TODO: Handle error.
-        assert(false);
+        error("Error while trying to call a declaration that wasn't a function. Check for name collisions in this scope.");
         return;
       }
     }

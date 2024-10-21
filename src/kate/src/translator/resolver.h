@@ -66,6 +66,8 @@ namespace kate::tlr {
 
     types::Type* resolve(ast::TypeId* type_id);
 
+    void error(const std::string& err);
+
     sem::Scope* m_currentScope;
 
     ast::FuncDecl* m_current_function;

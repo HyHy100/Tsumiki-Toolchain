@@ -20,8 +20,6 @@ namespace kate::tlr {
 
       if (!decl.matched) return {};
 
-      fmt::println("Adding new global declaration: {}", decl.value->name());
-
       m_global_decls.push_back(decl);
     }
 
