@@ -45,12 +45,19 @@ namespace kate::tlr {
       @input fragment_input: VertexOutput
     ): FragmentOutput {
       var white_c = [ 66, 78, 98, 95 ];
-      white_c[66] += 55;
+      white_c[0] += 55;
+
+      var mymat = float4x4(
+        float4(fragment_input.position.x),
+        fragment_input.position.xxxx,
+        fragment_input.position.xxxx,
+        fragment_input.position.xxxx
+      );
 
       return FragmentOutput(
         generate_float4(),
-        fragment_input.normal,
-        fragment_input.position
+        fragment_input.normal.xxx,
+        mymat[0]
       );
     })");
 

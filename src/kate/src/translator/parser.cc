@@ -104,7 +104,7 @@ namespace kate::tlr {
             case Token::Type::kPercent:
                 return 7;
             case Token::Type::kDot:
-            case Token::Type::kLBracket:
+            case Token::Type::kLeftBracket:
                 return 8;
             default:
                 return -1;
@@ -121,7 +121,7 @@ namespace kate::tlr {
           case Token::Type::kPercent:
           case Token::Type::kPlus:
           case Token::Type::kDot:
-          case Token::Type::kLBracket:
+          case Token::Type::kLeftBracket:
               return Associativity::kLeft;
           default:
               return Associativity::kRight;
@@ -465,7 +465,7 @@ namespace kate::tlr {
     if (stat.matched) return std::move(stat);
 
     // throw an error if all statements failed.
-    return error("invalid statement.");
+    return error("Invalid statement.");
   }
 
   Result<ast::CRef<ast::BlockStat>> Parser::parse_block()
@@ -503,7 +503,7 @@ namespace kate::tlr {
       expr = parse_expr();
 
       if (!expr.matched)
-        return error("missing a expression after ',' while parsing a expression list.");
+        return error("Missing a expression after ',' while parsing a expression list.");
 
       expr_list.push_back(std::move(expr.value));
     }
@@ -517,13 +517,13 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::ArrayExpr>> Parser::array_expr()
   {
-    if (matches(Token::Type::kLBracket)) {
+    if (matches(Token::Type::kLeftBracket)) {
       std::vector<ast::CRef<ast::Expr>> expr_list;
 
-      for (size_t i = 0; should_continue() && !matches(Token::Type::kRBracket); i++) {
+      for (size_t i = 0; should_continue() && !matches(Token::Type::kRightBracket); i++) {
         if (i > 0)
           if (!matches(Token::Type::kComma))
-            return error("Expected a ',' between expression when parsing array literal.");
+            return error("Expected a ',' between expressions when parsing an array literal.");
 
         auto expr = parse_expr();
 
@@ -707,7 +707,7 @@ namespace kate::tlr {
       case Token::Type::kIncrement:
       case Token::Type::kDecrement:
       case Token::Type::kDot:
-      case Token::Type::kLBracket:
+      case Token::Type::kLeftBracket:
         return true;
       default:
         return is_numeric_operator(tok);
@@ -750,7 +750,7 @@ namespace kate::tlr {
       auto op = lookahead;
 
       bool is_index_accessor = false;
-      if (op && op->type() == Token::Type::kLBracket) is_index_accessor = true;
+      if (op && op->type() == Token::Type::kLeftBracket) is_index_accessor = true;
 
       advance();
 
@@ -762,7 +762,7 @@ namespace kate::tlr {
       auto rhs = rhs_expr.unwrap();
 
       if (is_index_accessor) {
-          matches(Token::Type::kRBracket);
+          matches(Token::Type::kRightBracket);
           is_index_accessor = false;
       }
 
@@ -773,7 +773,7 @@ namespace kate::tlr {
           || (get_associativity(*lookahead) == Associativity::kRight 
                           && get_precedence(*lookahead) == get_precedence(*op))))
       {
-          if (lookahead && lookahead->type() == Token::Type::kLBracket)
+          if (lookahead && lookahead->type() == Token::Type::kLeftBracket)
               is_index_accessor = true;
 
           auto rhs_expr2 = parse_expression_1(
@@ -787,7 +787,7 @@ namespace kate::tlr {
           rhs = rhs_expr2;
 
           if (is_index_accessor) {
-              matches(Token::Type::kRBracket);
+              matches(Token::Type::kRightBracket);
               is_index_accessor = false;
           }
 
@@ -893,7 +893,7 @@ namespace kate::tlr {
         case Token::Type::kDot:
           op_type = ast::BinaryExpr::Type::kMemberAccess;
           break;
-        case Token::Type::kLBracket:
+        case Token::Type::kLeftBracket:
           op_type = ast::BinaryExpr::Type::kIndexAccessor;
           break;
         default:
@@ -1176,12 +1176,12 @@ namespace kate::tlr {
 
   Result<ast::CRef<ast::Type>> Parser::expect_type()
   {
-    if (matches(Token::Type::kLBracket)) {
+    if (matches(Token::Type::kLeftBracket)) {
       auto e = parse_expr();
 
       if (e.errored) return Failure::kError;
 
-      if (!matches(Token::Type::kRBracket)) 
+      if (!matches(Token::Type::kRightBracket)) 
         return error("missing ']' in array size.");
 
       auto type = expect_type();

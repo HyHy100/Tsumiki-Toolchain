@@ -335,7 +335,7 @@ namespace kate::tlr {
         sem_expr->setType(ty);
 
         var_stat->expr()->setSem(std::move(sem_expr));
-      } else // If there's no initializer then type is invalid.
+      } else // If there's no initializer then the statement is invalid.
         error("Variables without a type must have an initializer.");
     } else {
       resolve(var_stat->decl()->type().get());
@@ -597,12 +597,66 @@ namespace kate::tlr {
             error(fmt::format("Unable to find member '{}' in '{}'.", ident->ident(), user_type->name()));
             return;
           }
-        } else {
-          // (Renan): Support for swizzles is currently ongoing work.
-          // TODO: Handle error.
-          assert(false);
-          return;
-        }
+        } else if (auto vec_type = lhs_type->as<types::Vec>()) {
+          auto* swizzle_expr = bexpr->rhs()->as<ast::IdExpr>();
+
+          std::array<char, 4> swizzle;
+
+          if (swizzle_expr->ident().size() > 4) {
+            error("Too many swizzles.");
+            return;
+          }
+
+          auto supported_swizzles = std::array {
+            'x',
+            'y',
+            'z',
+            'w'
+          };
+
+          for (size_t i = 0; i < swizzle_expr->ident().size(); i++) {
+            bool ok = false;
+
+            for (size_t j = 0; j < vec_type->columns(); j++)
+              if (swizzle_expr->ident()[i] == supported_swizzles[j]) {
+                ok = true;
+                break;
+              }
+
+            if (!ok) {
+              error(
+                fmt::format(
+                  "Swizzle '{}' is not supported for type '{}'.",
+                  swizzle_expr->ident()[i],
+                  vec_type->mangledName()
+                )
+              );
+              return;
+            }
+          }
+
+          types::Type* type;
+
+          if (swizzle_expr->ident().size() == 1)
+            type = types::system().findType(vec_type->type()->mangledName());
+          else {
+            auto type_name = fmt::format(
+              "{}{}", 
+              vec_type->type()->mangledName(), 
+              swizzle_expr->ident().size()
+            );
+
+            type = types::system().findType(type_name);
+          }
+
+          bexpr->setSem(std::make_unique<sem::Expr>(bexpr));
+          bexpr->sem()->setType(type);          
+        } else
+          error(
+            fmt::format(
+              "'.' accessors are not supported for '{}'", lhs_type->mangledName()
+            )
+          );
       } else {
         // (Renan): This code path should never be reachable,
         // because the parser must require 'rhs' to be an identifier.
@@ -624,8 +678,21 @@ namespace kate::tlr {
 
         bexpr->setSem(std::make_unique<sem::Expr>(bexpr));
         bexpr->sem()->setType(array_type->type());
+      } else if (auto* matrix_type = bexpr->lhs()->sem()->type()->as<types::Mat>()) {
+        resolve(bexpr->rhs().get());
+
+        auto vec_type = types::system().findType(
+          fmt::format(
+            "{}{}", 
+            matrix_type->type()->mangledName(), 
+            matrix_type->rows()
+          )
+        );
+      
+        bexpr->setSem(std::make_unique<sem::Expr>(bexpr));
+        bexpr->sem()->setType(vec_type);
       } else {
-        error("Index accessors are only allowed for arrays.");
+        error("Index accessors are only allowed for arrays or matrices.");
         return;
       }
     } else {
@@ -737,7 +804,7 @@ namespace kate::tlr {
             auto* arg_type = call_args[0]->sem()->type();
 
             // we just need to validate if it's a scalar.
-            if (!arg_type->is<types::Scalar>()) {
+            if (!arg_type->is<types::Scalar>() && arg_type != constructor_type) {
               error("Matrix and vector constructors with a single constructor argument is expected to receive a scalar type.");
               return;
             }

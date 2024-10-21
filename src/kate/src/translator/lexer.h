@@ -55,8 +55,8 @@ namespace kate::tlr {
       kLTEq,      // <=
       kGT,        // >
       kLT,        // <
-      kLBracket,  // [
-      kRBracket,  // ]
+      kLeftBracket,  // [
+      kRightBracket,  // ]
       kLBrace,    // {
       kRBrace,    // }
       kComma,     // ,

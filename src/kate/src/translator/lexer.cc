@@ -639,7 +639,7 @@ namespace kate::tlr {
           break;
         case '[':
           m_tokens.emplace_back(
-            Token::Type::kLBracket,
+            Token::Type::kLeftBracket,
             std::string_view { &source[offset], 1 },
             loc
           );
@@ -647,7 +647,7 @@ namespace kate::tlr {
           break;
         case ']':
           m_tokens.emplace_back(
-            Token::Type::kRBracket,
+            Token::Type::kRightBracket,
             std::string_view { &source[offset], 1 },
             loc
           );
